@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4567:4567"
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/app
+    restart: always
