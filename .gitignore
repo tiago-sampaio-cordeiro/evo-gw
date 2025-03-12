@@ -1,0 +1,6 @@
+# Ignore rubymine archives
+.idea
+.bundle/
+
+/tmp
+/log/*.log
