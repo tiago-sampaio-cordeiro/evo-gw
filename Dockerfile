@@ -3,7 +3,7 @@ FROM ruby:latest
 
 #atualizando pacotes e instalando bibliotecas e dependencias
 RUN apt update && \
-    apt install -y build-essential libpq-dev
+    apt install -y build-essential
 
 #definindo o diretorio de trabalho
 WORKDIR /usr/src/app
