@@ -1,11 +1,33 @@
 require 'sinatra'
 require 'faye/websocket'
 require 'puma'
+require 'redis'
 require 'json'
+require 'logger'
+
 
 set :server, 'puma'
+set :views, File.join(settings.root, 'app', 'views')
 
+redis = Redis.new(host: 'redis', port: 6379)
+
+# Canal para comunicação via Pub/Sub
+channel = 'canal_teste'
+
+# Lista de conexões WebSocket ativas
 connections = []
+
+# Subscrição do Redis para o canal
+Thread.new do
+  redis.subscribe(channel) do |on|
+    on.message do |channel, message|
+      # Envia a mensagem recebida do Redis para todos os clientes WebSocket conectados
+      connections.each do |ws|
+        ws.send(message)
+      end
+    end
+  end
+end
 
 get '/welcome' do
   erb :index
@@ -15,22 +37,21 @@ get '/' do
   if Faye::WebSocket.websocket?(request.env)
     ws = Faye::WebSocket.new(request.env)
 
+
+    client_ip = env['REMOTE_ADDR'] || 'Desconhecido'
+
     ws.on :open do |_event|
       connections << ws
-      client_ip = env['REMOTE_ADDR'] || 'Desconhecido'
-      puts "Cliente conectado: #{client_ip}"
-      $stdout.flush
+      logger.info "Conexão estabelecida com o cliente #{client_ip}"
     end
 
     ws.on :message do |event|
       begin
         # Converte a mensagem recebida de JSON para um hash
         message = JSON.parse(event.data)
-        puts "Mensagem recebida como JSON:"
-        puts JSON.pretty_generate(message)
-
         if message['cmd'] == 'reg'
-          puts "Registro recebido para o dispositivo: #{message['sn']}"
+          logger.error "Registro recebido do dispositivo: #{message['sn']}"
+          puts JSON.pretty_generate(message)
 
           response = {
             ret: 'reg',
@@ -40,12 +61,12 @@ get '/' do
           }
 
           ws.send(response.to_json)
-          puts "Resposta enviada ao dispositivo:"
+          logger.info "Resposta enviada ao dispositivo:"
           puts JSON.pretty_generate(response)
 
         elsif message['cmd'] == 'sendlog'
-          puts "Logs recebidos do dispositivo: #{message['sn']}"
-          puts "Total de logs: #{message['count']}"
+          logger.info "Logs recebidos do dispositivo: #{message['sn']}"
+          logger.info "Total de logs: #{message['count']}"
 
           # Iterar pelos registros de log recebidos
           if message['record']
@@ -54,7 +75,7 @@ get '/' do
               puts JSON.pretty_generate(log)
             end
           else
-            puts "Nenhum registro de log encontrado."
+            logger.info "Nenhum registro de log encontrado"
           end
 
           response = {
@@ -68,17 +89,16 @@ get '/' do
           }
 
           ws.send(response.to_json)
-          puts "Resposta enviada ao dispositivo:"
+          logger.info "Resposta enviada ao dispositivo:"
           puts JSON.pretty_generate(response)
 
         else
-          puts "Comando não reconhecido: #{message['cmd']}"
+          logger.info "Comando não reconhecido: #{message['cmd']}"
           ws.send({ ret: 'error', reason: 'Unknown command' }.to_json)
         end
 
       rescue JSON::ParserError => e
-        puts "Erro ao processar a mensagem recebida (JSON inválido): #{e.message}"
-
+        logger.error "Erro ao processar JSON: #{e.message}"
         # Resposta de erro para JSON inválido
         error_response = {
           ret: 'error',
@@ -87,25 +107,33 @@ get '/' do
         ws.send(error_response.to_json)
 
       rescue => e
-        puts "Erro inesperado: #{e.message}"
+        logger.error "Erro inesperado: #{e.message}"
         ws.send({ ret: 'error', reason: 'Internal server error' }.to_json)
       end
     end
     # Log para desconexão
     ws.on :close do |event|
-      puts "Cliente desconectado: Code=#{event.code}, Reason=#{event.reason}"
+      connections.delete(ws)  # Remove a conexão da lista
+      logger.info "Cliente #{client_ip} desconectado: Codigo=#{event.code}, Razão=#{event.reason}"
     end
 
     # Log para erros
     ws.on :error do |event|
-      puts "Erro na conexão: #{event.message}"
+      logger.error "Erro de conexão: #{event.message}"
     end
 
     # Retorna a resposta WebSocket
     ws.rack_response
-  else
-    # Log para requisições HTTP normais
-    puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
-    [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
+  # else
+  #   # Log para requisições HTTP normais
+  #   puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
+  #   [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
   end
 end
+
+
+
+
+
+
+
