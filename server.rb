@@ -14,23 +14,19 @@ channel = 'canal_teste'
 connections = []
 connections_mutex = Mutex.new
 
-# Mantém a conexão com Redis ativa mesmo após falhas
 Thread.new do
+  subscriber = Redis.new(host: 'redis', port: 6379) # Conexão separada para subscrição
   loop do
     begin
       puts "🔄 Subscrição ao canal Redis iniciada..."
-      redis.subscribe(channel) do |on|
+      subscriber.subscribe(channel) do |on|
         on.message do |_channel, message|
           connections_mutex.synchronize do
-            connections.each do |ws|
-              if ws.ready_state == Faye::WebSocket::OPEN
-                ws.send(message)
-              end
-            end
+            connections.each { |ws| ws.send(message) if ws.ready_state == Faye::WebSocket::OPEN }
           end
         end
       end
-    rescue StandardError => e
+    rescue => e
       puts "⚠️ Erro no Redis: #{e.message}. Tentando reconectar..."
       sleep 2
       retry
@@ -38,10 +34,12 @@ Thread.new do
   end
 end
 
+# endpoint para testes entre dispositivos
 get '/welcome' do
-  erb :index
+  send_file File.join(settings.public_folder, 'index.html')  # Serve o arquivo HTML estático
 end
 
+# endpoint do servidor
 get '/' do
   if Faye::WebSocket.websocket?(request.env)
     ws = Faye::WebSocket.new(request.env)
@@ -49,7 +47,7 @@ get '/' do
     client_ip = env['REMOTE_ADDR'] || 'Desconhecido'
 
     ws.on :open do |_event|
-      connections << ws
+      connections_mutex.synchronize { connections << ws }
       logger.info "Conexão estabelecida com o cliente #{client_ip}"
     end
 
@@ -57,6 +55,10 @@ get '/' do
       begin
 
         redis.publish(channel, event.data)
+
+
+        # logica relacionada ao EVO
+
         # Converte a mensagem recebida de JSON para um hash
         # message = JSON.parse(event.data)
         # if message['cmd'] == 'reg'
@@ -122,7 +124,7 @@ get '/' do
     end
     # Log para desconexão
     ws.on :close do |event|
-      connections.delete(ws) # Remove a conexão da lista
+      connections_mutex.synchronize { connections.delete(ws) }
       logger.info "Cliente #{client_ip} desconectado: Codigo=#{event.code}, Razão=#{event.reason}"
     end
 
@@ -133,10 +135,10 @@ get '/' do
 
     # Retorna a resposta WebSocket
     ws.rack_response
-    # else
-    #   # Log para requisições HTTP normais
-    #   puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
-    #   [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
+    else
+      # Log para requisições HTTP normais
+      puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
+      [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
   end
 end
 
