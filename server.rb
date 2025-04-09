@@ -5,6 +5,7 @@ require 'redis'
 require 'json'
 require 'logger'
 
+set :bind, '0.0.0.0'
 set :server, 'puma'
 set :views, File.join(settings.root, 'app', 'views')
 
