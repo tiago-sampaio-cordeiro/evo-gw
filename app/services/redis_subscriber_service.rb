@@ -1,6 +1,6 @@
 require 'redis'
 class RedisSubscriberService
-  def self.start(channel:, connections:)
+  def self.start(channel:, connections:, mutex:)
     Thread.new do
       subscriber = Redis.new(host: 'redis', port: 6379) # Conexão separada para subscrição
       loop do
@@ -8,7 +8,7 @@ class RedisSubscriberService
           puts "🔄 Subscrição ao canal Redis iniciada..."
           subscriber.subscribe(channel) do |on|
             on.message do |_channel, message|
-              connections_mutex.synchronize do
+              mutex.synchronize do
                 connections.each { |ws| ws.send(message) if ws.ready_state == Faye::WebSocket::OPEN }
               end
             end
