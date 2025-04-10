@@ -16,7 +16,8 @@ connections_mutex = Mutex.new
 
 RedisSubscriberService.start(
   channel: channel,
-  connections: connections
+  connections: connections,
+  mutex: connections_mutex
 )
 
 # endpoint para testes entre dispositivos
