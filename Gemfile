@@ -28,4 +28,7 @@ gem 'redis'
 gem 'eventmachine'
 gem 'sidekiq'
 
+# gem para variaveis de ambiente ".env"
+gem 'dotenv'
+
 
