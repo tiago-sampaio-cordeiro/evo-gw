@@ -9,7 +9,7 @@ RUN apt update && \
 WORKDIR /usr/src/app
 
 # copia o arquivo Gemfile para dentro do container
-COPY Gemfile ./
+COPY Gemfile Gemfile.lock ./
 
 #instala gems
 RUN bundle install
