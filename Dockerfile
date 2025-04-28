@@ -21,7 +21,7 @@ RUN useradd -m appuser && chown -R appuser /usr/src/app
 USER appuser
 
 # Deixa a porta 4567 exposta
-EXPOSE 4567
+EXPOSE 9292
 
 # Comando para iniciar o servidor
-CMD ["ruby", "server.rb", "-o", "0.0.0.0"]
+CMD ["rackup", "--host", "0.0.0.0", "-p", "9292"]
