@@ -1,7 +1,3 @@
-require 'faye/websocket'
-require 'json'
-require 'time'
-
 class WebSocketHandler
   def initialize(env, redis, connections, connections_mutex, logger, channel)
     @env = env
@@ -14,6 +10,7 @@ class WebSocketHandler
 
   def call
     ws = Faye::WebSocket.new(@env)
+
     client_ip = @env['REMOTE_ADDR'] || 'Desconhecido'
 
     ws.on :open do |_event|
@@ -24,8 +21,6 @@ class WebSocketHandler
     ws.on :message do |event|
       begin
         @redis.publish(@channel, event.data)
-        # Se quiser, você pode chamar métodos específicos aqui para tratar comandos
-        # process_message(event.data, ws)
       rescue JSON::ParserError => e
         error_response = { ret: 'error', reason: 'Invalid JSON format' }
         ws.send(error_response.to_json)
@@ -45,6 +40,8 @@ class WebSocketHandler
       @logger.error "Erro de conexão: #{event.message}"
     end
 
-    ws.rack_response
+    # Garantir que a resposta seja compatível com o Rack
+    # Retornando um status 101 para a conexão WebSocket
+    [101, { 'upgrade' => 'websocket', 'connection' => 'upgrade' }, ws.rack_response]
   end
 end

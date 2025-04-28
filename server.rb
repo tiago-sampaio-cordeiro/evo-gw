@@ -1,40 +1,59 @@
-require 'sinatra'
-require 'puma'
+require 'rack'
+require 'faye/websocket'
+require 'redis'
 require 'logger'
+
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
 
-set :bind, '0.0.0.0'
-set :server, 'puma'
-set :views, File.join(settings.root, 'app', 'views')
+class Server
+  def initialize
+    @logger = Logger.new($stdout)
+    @redis = Redis.new(host: 'redis', port: 6379)
+    @channel = 'canal_teste'
+    @connections = []
+    @mutex = Mutex.new
 
-redis = Redis.new(host: 'redis', port: 6379)
-channel = 'canal_teste'
+    RedisSubscriberService.start(
+      channel: @channel,
+      connections: @connections,
+      mutex: @mutex
+    )
+  end
 
-connections = []
-connections_mutex = Mutex.new
-
-RedisSubscriberService.start(
-  channel: channel,
-  connections: connections,
-  mutex: connections_mutex
-)
-
-# endpoint para testes entre dispositivos
-get '/welcome' do
-  send_file File.join(settings.public_folder, 'index.html')  # Serve o arquivo HTML estático
-end
-
-# endpoint do servidor
-get '/' do
-  if Faye::WebSocket.websocket?(request.env)
-    handler = WebSocketHandler.new(request.env, redis, connections, connections_mutex, logger, channel)
-    handler.call
-  else
-    puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
-    [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
+  def call(env)
+    request = Rack::Request.new(env)
+    case request.path_info
+    when "/"
+      if Faye::WebSocket.websocket?(env)
+        handler = WebSocketHandler.new(env, @redis, @connections, @mutex, @logger, @channel)
+        return handler.call
+      else
+        puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
+        [200, { 'content-type' => 'text/plain' }, ['Hello']]
+      end
+    else
+      [404, { 'content-type' => 'text/plain' }, ['Página não encontrada']]
+    end
   end
 end
+
+
+# # endpoint para testes entre dispositivos
+# get '/welcome' do
+#   send_file File.join(settings.public_folder, 'index.html') # Serve o arquivo HTML estático
+# end
+#
+# # endpoint do servidor
+# get '/' do
+#   if Faye::WebSocket.websocket?(request.env)
+#     handler = WebSocketHandler.new(request.env, redis, connections, connections_mutex, logger, channel)
+#     handler.call
+#   else
+#     puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
+#     [200, { 'content-type' => 'text/plain' }, ['Hello']]
+#   end
+# end
 
 # logica relacionada ao EVO
 
