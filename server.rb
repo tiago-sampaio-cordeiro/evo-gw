@@ -14,6 +14,14 @@ class Server
     @connections = []
     @mutex = Mutex.new
 
+    @config = {
+      redis: @redis,
+      connections: @connections,
+      mutex: @mutex,
+      logger: @logger,
+      channel: @channel
+    }
+
     RedisSubscriberService.start(
       channel: @channel,
       connections: @connections,
@@ -24,10 +32,10 @@ class Server
   def call(env)
     request = Rack::Request.new(env)
     case request.path_info
-    when "/"
+    when "/", '/pub/chat'
       if Faye::WebSocket.websocket?(env)
-        handler = WebSocketHandler.new(env, @redis, @connections, @mutex, @logger, @channel)
-        return handler.call
+        handler = WebSocketHandler.new(self, @config)
+        return handler.call(env)
       else
         puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
         [200, { 'content-type' => 'text/plain' }, ['Hello']]
