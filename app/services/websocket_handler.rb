@@ -1,47 +1,51 @@
+require 'json'
+require 'faye/websocket'
+require 'eventmachine'
+require_relative 'devices/evo'
+
 class WebSocketHandler
-  def initialize(env, redis, connections, connections_mutex, logger, channel)
-    @env = env
-    @redis = redis
-    @connections = connections
-    @connections_mutex = connections_mutex
-    @logger = logger
-    @channel = channel
+  def initialize(app, config = {})
+    @app = app
+    @redis = config[:redis]
+    @connections = config[:connections]
+    @mutex = config[:mutex]
+    @logger = config[:logger]
+    @channel = config[:channel]
   end
 
-  def call
-    ws = Faye::WebSocket.new(@env)
+  def call(env)
+    if Faye::WebSocket.websocket?(env)
+      ws = Faye::WebSocket.new(env)
 
-    client_ip = @env['REMOTE_ADDR'] || 'Desconhecido'
-
-    ws.on :open do |_event|
-      @connections_mutex.synchronize { @connections << ws }
-      @logger.info "Conexão estabelecida com o cliente #{client_ip}"
-    end
-
-    ws.on :message do |event|
-      begin
-        @redis.publish(@channel, event.data)
-      rescue JSON::ParserError => e
-        error_response = { ret: 'error', reason: 'Invalid JSON format' }
-        ws.send(error_response.to_json)
-        @logger.error "Erro ao processar JSON: #{e.message}"
-      rescue => e
-        @logger.error "Erro inesperado: #{e.message}"
-        ws.send({ ret: 'error', reason: 'Internal server error' }.to_json)
+      # Evento de abertura
+      ws.on :open do |event|
+        puts 'WebSocket aberto'
       end
-    end
 
-    ws.on :close do |event|
-      @connections_mutex.synchronize { @connections.delete(ws) }
-      @logger.info "Cliente #{client_ip} desconectado: Codigo=#{event.code}, Razão=#{event.reason}"
-    end
+      # Evento de mensagem
+      ws.on :message do |event|
+        message = JSON.parse(event.data)
+        puts "Mensagem recebida: #{message}"
+        puts "COMANDO: #{message["cmd"]}"
 
-    ws.on :error do |event|
-      @logger.error "Erro de conexão: #{event.message}"
-    end
+        Devices.handle_reg(message, ws)
+      end
 
-    # Garantir que a resposta seja compatível com o Rack
-    # Retornando um status 101 para a conexão WebSocket
-    [101, { 'upgrade' => 'websocket', 'connection' => 'upgrade' }, ws.rack_response]
+      # Evento de erro
+      ws.on :error do |event|
+        puts "Erro no WebSocket: #{event.message}"
+      end
+
+      # Evento de fechamento
+      ws.on :close do |event|
+        puts "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
+        ws = nil
+      end
+
+      # Retorna a resposta assincrona do WebSocket
+      ws.rack_response
+    else
+      @app.call(env)
+    end
   end
 end
