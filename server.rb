@@ -6,6 +6,7 @@ require 'logger'
 
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
+require_relative 'app/services/devices/sender'
 
 class Server < Rack::App
   @logger = Logger.new($stdout)
@@ -33,28 +34,6 @@ class Server < Rack::App
       true
     end
 
-  def self.get_user_list
-    command = {
-      cmd: 'getuserlist',
-      stn: true
-    }
-
-    message = command.to_json
-
-    @mutex.synchronize do
-      @connections.each do |ws|
-        ws.send(message)
-      end
-    end
-
-    @logger.info "Comando 'getuserlist' enviado para todos aparelhos conectados"
-  end
-
-  get '/send_getuserlist' do
-    Server.get_user_list
-    [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado' }.to_json]]
-  end
-
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
       handler = WebSocketHandler.new(self, self.class.instance_variable_get(:@config))
@@ -62,6 +41,18 @@ class Server < Rack::App
     else
       self.class.instance_variable_get(:@logger).info "Requisição HTTP recebida: #{env['PATH_INFO']}"
       [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
+    end
+  end
+
+  get '/send_getuserlist' do
+    # Pegando a primeira conexão ativa (simples para exemplo)
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.send_get_user_list(ws)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
     end
   end
 end
