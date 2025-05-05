@@ -20,6 +20,10 @@ class WebSocketHandler
       # Evento de abertura
       ws.on :open do |event|
         puts 'WebSocket aberto'
+
+        @mutex.synchronize do
+          @connections << ws
+        end
       end
 
       # Evento de mensagem
@@ -39,6 +43,10 @@ class WebSocketHandler
       # Evento de fechamento
       ws.on :close do |event|
         puts "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
+        @mutex.synchronize do
+          @connections.delete(ws)
+        end
+
         ws = nil
       end
 
