@@ -33,6 +33,28 @@ class Server < Rack::App
       true
     end
 
+  def self.get_user_list
+    command = {
+      cmd: 'getuserlist',
+      stn: true
+    }
+
+    message = command.to_json
+
+    @mutex.synchronize do
+      @connections.each do |ws|
+        ws.send(message)
+      end
+    end
+
+    @logger.info "Comando 'getuserlist' enviado para todos aparelhos conectados"
+  end
+
+  get '/send_getuserlist' do
+    Server.get_user_list
+    [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado' }.to_json]]
+  end
+
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
       handler = WebSocketHandler.new(self, self.class.instance_variable_get(:@config))
