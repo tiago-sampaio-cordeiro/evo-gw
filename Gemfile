@@ -12,6 +12,7 @@ gem 'faye-websocket'
 
 # Processamento de requisições e respostas HTTP
 gem 'rack'
+gem 'rack-app'
 gem 'rackup'
 
 # Servidor web

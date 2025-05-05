@@ -9,7 +9,7 @@ class RedisSubscriberService
           subscriber.subscribe(channel) do |on|
             on.message do |_channel, message|
               mutex.synchronize do
-                connections.each { |ws| ws.send(message) if ws.ready_state == Faye::WebSocket::OPEN }
+                connections.each { |ws| ws.send(message)}
               end
             end
           end

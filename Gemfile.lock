@@ -4,6 +4,7 @@ GEM
     base64 (0.2.0)
     connection_pool (2.5.0)
     daemons (1.4.1)
+    dotenv (3.1.8)
     eventmachine (1.2.7)
     faye-websocket (0.11.3)
       eventmachine (>= 0.12.0)
@@ -17,6 +18,9 @@ GEM
     puma (6.6.0)
       nio4r (~> 2.0)
     rack (3.1.12)
+    rack-app (11.0.2)
+      rack (>= 3.0.0)
+      rackup
     rack-protection (4.1.1)
       base64 (>= 0.1.0)
       logger (>= 1.6.0)
@@ -65,10 +69,12 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  dotenv
   eventmachine
   faye-websocket
   puma (~> 6.0)
   rack
+  rack-app
   rackup
   redis
   sidekiq
