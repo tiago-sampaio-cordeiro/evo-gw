@@ -11,7 +11,6 @@ require_relative 'app/services/devices/sender'
 class Server < Rack::App
   @logger = Logger.new($stdout)
   @redis = Redis.new(host: 'redis', port: 6379)
-  @channel = 'canal_teste'
   @connections = []
   @mutex = Mutex.new
 
@@ -19,20 +18,8 @@ class Server < Rack::App
     redis: @redis,
     connections: @connections,
     mutex: @mutex,
-    logger: @logger,
-    channel: @channel
+    logger: @logger
   }
-
-  # Evita múltiplas inicializações da subscrição Redis
-  @subscriber_started ||=
-    begin
-      RedisSubscriberService.start(
-        channel: @channel,
-        connections: @connections,
-        mutex: @mutex
-      )
-      true
-    end
 
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
