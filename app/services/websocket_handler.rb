@@ -25,8 +25,19 @@ class WebSocketHandler
       # Evento de mensagem
       ws.on :message do |event|
         message = JSON.parse(event.data)
-        puts "Mensagem recebida: #{message}"
-        puts "COMANDO: #{message["cmd"]}"
+        sn = message['sn']
+        next unless sn
+
+        channel = sn
+
+        # Inicia subscrição dinâmica se ainda não existe
+        unless RedisSubscriberService.subscribed?(channel)
+          RedisSubscriberService.start(
+            channel: channel,
+            connections: @connections,
+            mutex: @mutex
+          )
+        end
 
         Devices.handle_reg(message, ws)
       end
