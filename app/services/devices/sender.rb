@@ -9,5 +9,16 @@ module Devices
       ws.send(command.to_json)
       puts "Comando 'getuserlist' enviado para o aparelho"
     end
+
+    def self.userinfo(ws, user)
+      command = {
+        cmd: 'getuserinfo',
+        user: user,
+        backupnum: 10
+      }
+
+      ws.send(command.to_json)
+      puts "commando 'getuserinfo' enviado para o aparelho"
+    end
   end
 end
