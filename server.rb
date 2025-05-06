@@ -53,4 +53,15 @@ class Server < Rack::App
       [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
     end
   end
+
+  post '/set_user_info' do
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.set_user_info(ws, 1)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado userInfo' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
+    end
+  end
 end
