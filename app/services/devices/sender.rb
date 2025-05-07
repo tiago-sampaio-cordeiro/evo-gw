@@ -89,11 +89,11 @@ module Devices
       puts "Comando 'enableuser' enviado para o aparelho"
     end
 
-    def self.get_all_log(ws, initi_data, end_data)
+    def self.get_all_log(ws, init_data, end_data)
       command = {
         cmd: 'getalllog',
         stn: true,
-        from: initi_data, # Data inicial
+        from: init_data, # Data inicial
         to: end_data # Data final
       }
 
@@ -110,6 +110,14 @@ module Devices
       puts "Commando 'cleanlog' enviado para o aparelho"
     end
 
+    # Apaga todos os logs e todos os usuario, mas mantem as config
+    def self.initsys(ws)
+      command = {
+        cmd: 'initsys'
+      }
 
+      ws.send(command.to_json)
+      puts "Commando 'initsys' enviado para o aparelho"
+    end
   end
 end

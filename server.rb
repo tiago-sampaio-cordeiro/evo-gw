@@ -113,7 +113,7 @@ class Server < Rack::App
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
-      Devices::Sender.get_all_log(ws, 2025-01-01, )
+      Devices::Sender.get_all_log(ws, "2025-01-01", Time.now.strftime("%Y-%m-%d"))
       [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado getAllLog' }.to_json]]
     else
       [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
@@ -125,6 +125,17 @@ class Server < Rack::App
 
     if ws
       Devices::Sender.clean_log(ws)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado cleanLog' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
+    end
+  end
+
+  post 'initsys' do
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.initsys(ws)
       [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado cleanLog' }.to_json]]
     else
       [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
