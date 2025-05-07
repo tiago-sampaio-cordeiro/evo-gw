@@ -13,7 +13,7 @@ module Devices
     def self.userinfo(ws, user)
       command = {
         cmd: 'getuserinfo',
-        user: user,
+        enrollid: user,
         backupnum: 10
       }
 
