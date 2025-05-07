@@ -142,3 +142,8 @@ class Server < Rack::App
     end
   end
 end
+
+# TODO
+# Esta sendo recuperado a primeira conexão de forma estatica para desenvolvimento
+# Os valores como id do usuario e datas estão sendo passados fixo para teste dos metodos
+# Será feita uma nova branch para criação do mocks para sumulação de requisição vinda do PTRP
