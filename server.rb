@@ -136,7 +136,18 @@ class Server < Rack::App
 
     if ws
       Devices::Sender.initsys(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado cleanLog' }.to_json]]
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado initsys' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
+    end
+  end
+
+  post 'reboot' do
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.reboot(ws)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado reboot' }.to_json]]
     else
       [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
     end
