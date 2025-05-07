@@ -137,5 +137,15 @@ module Devices
       ws.send(command.to_json)
       puts "Commando 'cleanadmin' enviado para o aparelho"
     end
+
+    def self.set_time(ws, time)
+      command = {
+        cmd: 'settime',
+        cloudtime: time
+      }
+
+      ws.send(command.to_json)
+      puts "Commando 'set_time' enviado para o aparelho"
+    end
   end
 end
