@@ -128,5 +128,14 @@ module Devices
       ws.send(command.to_json)
       puts "Commando 'reboot' enviado para o aparelho"
     end
+
+    def self.cleanadmin(ws)
+      command = {
+        cmd: 'cleanadmin'
+      }
+
+      ws.send(command.to_json)
+      puts "Commando 'cleanadmin' enviado para o aparelho"
+    end
   end
 end

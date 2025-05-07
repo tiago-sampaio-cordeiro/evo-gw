@@ -152,6 +152,17 @@ class Server < Rack::App
       [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
     end
   end
+
+  post 'cleanadmin' do
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.cleanadmin(ws)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado clearadmin' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
+    end
+  end
 end
 
 # TODO
