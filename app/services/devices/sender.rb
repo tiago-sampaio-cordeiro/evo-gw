@@ -1,6 +1,45 @@
 module Devices
   module Sender
-    def self.send_get_user_list(ws)
+
+    def self.send(ws, command, *args)
+      case command
+      when 'user_list'
+        user_list(ws, *args)
+      when 'user_info'
+        user_info(ws, *args)
+      when 'set_user_info'
+        set_user_info(ws, *args)
+      when 'delete_user'
+        delete_user(ws, *args)
+      when 'username'
+        get_username(ws, *args)
+      when 'set_username'
+        set_username(ws, *args)
+      when 'enable_user'
+        enable_user(ws, *args)
+      when 'clean_user'
+        clean_user(ws, *args)
+      when 'get_new_log'
+        get_new_log(ws, *args)
+      when 'get_all_log'
+        get_all_log(ws, *args)
+      when 'clean_log'
+        clean_log(ws, *args)
+      when 'initsys'
+        initsys(ws, *args)
+      when 'reboot'
+        reboot(ws, *args)
+      when 'clean_admin'
+        clean_admin(ws, *args)
+      when 'set_time'
+        set_time(ws, *args)
+      else
+        puts "Comando desconhecido: #{command}"
+      end
+    end
+
+    private
+    def self.user_list(ws)
       command = {
         cmd: 'getuserlist',
         stn: true
@@ -10,7 +49,7 @@ module Devices
       puts "Comando 'getuserlist' enviado para o aparelho"
     end
 
-    def self.userinfo(ws, user)
+    def self.user_info(ws, user)
       command = {
         cmd: 'getuserinfo',
         enrollid: user,
@@ -21,11 +60,11 @@ module Devices
       puts "commando 'getuserinfo' enviado para o aparelho"
     end
 
-    def self.set_user_info(ws, user)
+    def self.set_user_info(ws, user, name)
       command = {
         cmd: 'setuserinfo',
         enrollid: user,
-        name: "Pablo",
+        name: name,
         backupnum: 0
       }
 
@@ -54,7 +93,7 @@ module Devices
       puts "Comando 'getusername' enviado para o aparelho"
     end
 
-    def self.setusername(ws, user, name)
+    def self.set_username(ws, user, name)
       command = {
         cmd: 'setusername',
         count: 1, # numero de usuarios que sera setado o nome
@@ -70,11 +109,11 @@ module Devices
       puts "Comando 'setusername' enviado para o aparelho"
     end
 
-    def self.enable_user(ws, user)
+    def self.enable_user(ws, user, value)
       command = {
         cmd: 'enableuser',
         enrollid: user,
-        enflag: 1 # valor pode ser 0 ou 1, 0 para desabilitar e 1 para habilitar
+        enflag: value # valor pode ser 0 ou 1, 0 para desabilitar e 1 para habilitar
       }
 
       ws.send(command.to_json)
@@ -91,7 +130,7 @@ module Devices
       puts "Comando 'enableuser' enviado para o aparelho"
     end
 
-    def self.getnewlog(ws)
+    def self.get_new_log(ws)
       command = {
         cmd: 'getnewlog',
         stn: true
@@ -141,7 +180,7 @@ module Devices
       puts "Commando 'reboot' enviado para o aparelho"
     end
 
-    def self.cleanadmin(ws)
+    def self.clean_admin(ws)
       command = {
         cmd: 'cleanadmin'
       }
