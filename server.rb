@@ -2,13 +2,15 @@ require 'rack'
 require 'rack/app'
 require 'faye/websocket'
 require 'redis'
-require 'logger'
 
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
 require_relative 'app/services/devices/sender'
+require_relative 'app/helpers/handle_ws_command_helper.rb'
 
 class Server < Rack::App
+  include HandleWsCommandHelper
+
   @logger = Logger.new($stdout)
   @redis = Redis.new(host: 'redis', port: 6379)
   @connections = []
@@ -31,170 +33,69 @@ class Server < Rack::App
     end
   end
 
-  get '/send_getuserlist' do
-    # Pegando a primeira conexão ativa (simples para exemplo)
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.send_get_user_list(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+  get '/user_list' do
+    handle_ws_command(current_ws, 'user_list')
   end
 
-  get '/userinfo' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.userinfo(ws, 1)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado userInfo' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+  get '/user_info' do
+    handle_ws_command(current_ws, 'user_info', 1)
   end
 
   post '/set_user_info' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.set_user_info(ws, 2)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado SetuserInfo' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'set_user_info', 1, "Pablo Pereira")
   end
 
   post '/delete_user' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.delete_user(ws, 1)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado DeleteUser' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'delete_user', 1)
   end
 
   get '/username' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.get_username(ws, 1)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado getUsername' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'username', 1)
   end
 
-  post '/setusername' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.setusername(ws, 1, "Teste")
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado setUsername' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+  post '/set_username' do
+    handle_ws_command(current_ws, 'set_username', 1, "pablito")
   end
 
   post '/enable_user' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.enable_user(ws, 1)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado enableUser' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'enable_user', 1, 1)
   end
 
   post '/clean_user' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.clean_user(ws, 1)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado cleanUser' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'clean_user')
   end
 
-  get '/newlog' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.getnewlog(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado getnewlog' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+  get '/new_log' do
+    handle_ws_command(current_ws, 'get_new_log')
   end
 
   get '/get_all_log' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.get_all_log(ws, "2025-01-01", Time.now.strftime("%Y-%m-%d"))
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado getAllLog' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d"))
   end
 
   post '/clean_log' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.clean_log(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado cleanLog' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'clean_log')
   end
 
   post '/initsys' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.initsys(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado initsys' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'initsys')
   end
 
   post '/reboot' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.reboot(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado reboot' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+    handle_ws_command(current_ws, 'reboot')
   end
 
-  post '/cleanadmin' do
-    ws = self.class.instance_variable_get(:@connections).first
-
-    if ws
-      Devices::Sender.cleanadmin(ws)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado clearadmin' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+  post '/clean_admin' do
+    handle_ws_command(current_ws, 'clean_admin')
   end
 
   post '/set_time' do
-    ws = self.class.instance_variable_get(:@connections).first
+    handle_ws_command(current_ws, 'set_time', Time.now)
+  end
 
-    if ws
-      Devices::Sender.set_time(ws, Time.now)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado settime' }.to_json]]
-    else
-      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
-    end
+  private
+  def current_ws
+    self.class.instance_variable_get(:@connections).first
   end
 end
 
