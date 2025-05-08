@@ -55,18 +55,21 @@ module Devices
       puts "Comando 'getusername' enviado para o aparelho"
     end
 
-    # def self.setUsername(ws, user)
-    #   command = {
-    #     cmd: 'setusername',
-    #     count: , # numero de usuarios que sera setado o nome
-    #     record: [
-    #       {
-    #         enrollid: user,
-    #         name: "Teste"
-    #       }
-    #     ]
-    #   }
-    # end
+    def self.setusername(ws, user, name)
+      command = {
+        cmd: 'setusername',
+        count: 1, # numero de usuarios que sera setado o nome
+        record: [
+          {
+            enrollid: user,
+            name: name
+          }
+        ]
+      }
+
+      ws.send(command.to_json)
+      puts "Comando 'setusername' enviado para o aparelho"
+    end
 
     def self.enable_user(ws, user)
       command = {
@@ -87,6 +90,16 @@ module Devices
 
       ws.send(command.to_json)
       puts "Comando 'enableuser' enviado para o aparelho"
+    end
+
+    def self.getnewlog(ws)
+      command = {
+        cmd: 'getnewlog',
+        stn: true
+      }
+
+      ws.send(command.to_json)
+      puts "Comando 'getnewlog' enviado para o aparelho"
     end
 
     def self.get_all_log(ws, init_data, end_data)

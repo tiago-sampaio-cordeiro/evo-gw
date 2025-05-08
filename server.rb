@@ -87,6 +87,17 @@ class Server < Rack::App
     end
   end
 
+  post 'setusername' do
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.setusername(ws, 1, "Teste")
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado setUsername' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
+    end
+  end
+
   post '/enable_user' do
     ws = self.class.instance_variable_get(:@connections).first
 
@@ -104,6 +115,17 @@ class Server < Rack::App
     if ws
       Devices::Sender.clean_user(ws, 1)
       [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado cleanUser' }.to_json]]
+    else
+      [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
+    end
+  end
+
+  get 'newlog' do
+    ws = self.class.instance_variable_get(:@connections).first
+
+    if ws
+      Devices::Sender.getnewlog(ws)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'comando enviado getnewlog' }.to_json]]
     else
       [500, { 'Content-Type' => 'application/json' }, [{ error: 'Nenhuma conexão WebSocket ativa' }.to_json]]
     end
