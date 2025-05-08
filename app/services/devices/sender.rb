@@ -4,7 +4,7 @@ module Devices
     def self.send(ws, command, *args)
       case command
       when 'user_list'
-        user_list(ws, *args)
+        user_list(ws)
       when 'user_info'
         user_info(ws, *args)
       when 'set_user_info'
@@ -18,19 +18,19 @@ module Devices
       when 'enable_user'
         enable_user(ws, *args)
       when 'clean_user'
-        clean_user(ws, *args)
+        clean_user(ws)
       when 'get_new_log'
-        get_new_log(ws, *args)
+        get_new_log(ws)
       when 'get_all_log'
         get_all_log(ws, *args)
       when 'clean_log'
-        clean_log(ws, *args)
+        clean_log(ws)
       when 'initsys'
-        initsys(ws, *args)
+        initsys(ws)
       when 'reboot'
-        reboot(ws, *args)
+        reboot(ws)
       when 'clean_admin'
-        clean_admin(ws, *args)
+        clean_admin(ws)
       when 'set_time'
         set_time(ws, *args)
       else
