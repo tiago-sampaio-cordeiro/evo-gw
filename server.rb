@@ -2,6 +2,7 @@ require 'rack'
 require 'rack/app'
 require 'faye/websocket'
 require 'redis'
+require 'logger'
 
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
@@ -11,91 +12,77 @@ require_relative 'app/helpers/handle_ws_command_helper.rb'
 class Server < Rack::App
   include HandleWsCommandHelper
 
-  @logger = Logger.new($stdout)
-  @redis = Redis.new(host: 'redis', port: 6379)
-  @connections = []
-  @mutex = Mutex.new
+  LOGGER = Logger.new($stdout)
+  REDIS = Redis.new(host: 'redis', port: 6379)
+  CONNECTIONS = []
+  MUTEX = Mutex.new
 
-  @config = {
-    redis: @redis,
-    connections: @connections,
-    mutex: @mutex,
-    logger: @logger
+  CONFIG = {
+    redis: REDIS,
+    connections: CONNECTIONS,
+    mutex: MUTEX,
+    logger: LOGGER
   }
+
+  # caminhos e variaveis para cada chamada função
+  GET_COMMAND_ROUTES = {
+    '/user_list'     => 'user_list',
+    '/user_info'     => ['user_info', 1],
+    '/username'      => ['username', 1],
+    '/new_log'       => 'get_new_log',
+    '/get_all_log'   => ['get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d")]
+  }
+
+  POST_COMMAND_ROUTES = {
+    '/set_user_info' => ['set_user_info', 1, "Pablo Pereira"],
+    '/delete_user'   => ['delete_user', 1],
+    '/set_username'  => ['set_username', 1, "pablito"],
+    '/enable_user'   => ['enable_user', 1, 1],
+    '/clean_user'    => 'clean_user',
+    '/clean_log'     => 'clean_log',
+    '/initsys'       => 'initsys',
+    '/reboot'        => 'reboot',
+    '/clean_admin' => 'clean_admin',
+    '/set_time' => ['set_time', Time.now]
+  }
+
+  # Laço de repetição para criar rotas GET
+  GET_COMMAND_ROUTES.each do |path, command|
+    get path do
+      if command.is_a?(Array)
+        handle_ws_command(current_ws, *command)
+      else
+        handle_ws_command(current_ws, command)
+      end
+    end
+  end
+
+  # Laço de repetição para criar rotas POST
+  POST_COMMAND_ROUTES.each do |path, command|
+    post path do
+      if command.is_a?(Array)
+        handle_ws_command(current_ws, *command)
+      else
+        handle_ws_command(current_ws, command)
+      end
+    end
+  end
+
+
 
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
-      handler = WebSocketHandler.new(self, self.class.instance_variable_get(:@config))
+      handler = WebSocketHandler.new(self, CONFIG)
       handler.call(env)
     else
-      self.class.instance_variable_get(:@logger).info "Requisição HTTP recebida: #{env['PATH_INFO']}"
+      LOGGER.info "Requisição HTTP recebida: #{env['PATH_INFO']}"
       [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
     end
   end
 
-  get '/user_list' do
-    handle_ws_command(current_ws, 'user_list')
-  end
-
-  get '/user_info' do
-    handle_ws_command(current_ws, 'user_info', 1)
-  end
-
-  post '/set_user_info' do
-    handle_ws_command(current_ws, 'set_user_info', 1, "Pablo Pereira")
-  end
-
-  post '/delete_user' do
-    handle_ws_command(current_ws, 'delete_user', 1)
-  end
-
-  get '/username' do
-    handle_ws_command(current_ws, 'username', 1)
-  end
-
-  post '/set_username' do
-    handle_ws_command(current_ws, 'set_username', 1, "pablito")
-  end
-
-  post '/enable_user' do
-    handle_ws_command(current_ws, 'enable_user', 1, 1)
-  end
-
-  post '/clean_user' do
-    handle_ws_command(current_ws, 'clean_user')
-  end
-
-  get '/new_log' do
-    handle_ws_command(current_ws, 'get_new_log')
-  end
-
-  get '/get_all_log' do
-    handle_ws_command(current_ws, 'get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d"))
-  end
-
-  post '/clean_log' do
-    handle_ws_command(current_ws, 'clean_log')
-  end
-
-  post '/initsys' do
-    handle_ws_command(current_ws, 'initsys')
-  end
-
-  post '/reboot' do
-    handle_ws_command(current_ws, 'reboot')
-  end
-
-  post '/clean_admin' do
-    handle_ws_command(current_ws, 'clean_admin')
-  end
-
-  post '/set_time' do
-    handle_ws_command(current_ws, 'set_time', Time.now)
-  end
-
   private
   def current_ws
-    self.class.instance_variable_get(:@connections).first
+    CONNECTIONS.first
   end
 end
 
