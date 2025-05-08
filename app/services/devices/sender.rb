@@ -38,9 +38,8 @@ module Devices
       command = {
         cmd: 'deleteuser',
         enrollid: user,
-        backupnum: 0
+        backupnum: 0 # Apaga todos os dados do usuário
       }
-
       ws.send(command.to_json)
       puts "comando 'deleteuser' enviado para o aparelho"
     end

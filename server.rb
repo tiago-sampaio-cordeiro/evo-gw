@@ -87,7 +87,7 @@ class Server < Rack::App
     end
   end
 
-  post 'setusername' do
+  post '/setusername' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -109,7 +109,7 @@ class Server < Rack::App
     end
   end
 
-  post 'clean_user' do
+  post '/clean_user' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -120,7 +120,7 @@ class Server < Rack::App
     end
   end
 
-  get 'newlog' do
+  get '/newlog' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -131,7 +131,7 @@ class Server < Rack::App
     end
   end
 
-  get 'get_all_log' do
+  get '/get_all_log' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -142,7 +142,7 @@ class Server < Rack::App
     end
   end
 
-  post 'clean_log' do
+  post '/clean_log' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -153,7 +153,7 @@ class Server < Rack::App
     end
   end
 
-  post 'initsys' do
+  post '/initsys' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -164,7 +164,7 @@ class Server < Rack::App
     end
   end
 
-  post 'reboot' do
+  post '/reboot' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -175,7 +175,7 @@ class Server < Rack::App
     end
   end
 
-  post 'cleanadmin' do
+  post '/cleanadmin' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
@@ -186,7 +186,7 @@ class Server < Rack::App
     end
   end
 
-  post 'set_time' do
+  post '/set_time' do
     ws = self.class.instance_variable_get(:@connections).first
 
     if ws
