@@ -1,3 +1,5 @@
+require 'logger'
+
 module Devices
   # Método para lidar com o comando de registro
   def self.handle_reg(message, ws)
@@ -13,9 +15,8 @@ module Devices
         nosenduser: true
       }
 
-      ws.send(response.to_json)
-      puts "Resposta enviada ao dispositivo:"
-      puts JSON.pretty_generate(response)
+
+      response_ws(ws, response)
 
     when "sendlog"
       puts "Logs recebidos do dispositivo: #{message['sn']}"
@@ -31,9 +32,14 @@ module Devices
         message: 'Logs recebidos com sucesso'
       }
 
-      ws.send(response.to_json)
-      puts "Resposta enviada ao dispositivo:"
-      puts JSON.pretty_generate(response)
+      response_ws(ws, response)
     end
+  end
+  private
+
+  def self.response_ws(ws, response)
+    ws.send(response.to_json)
+    DeviceLogger.info "Resposta enviada ao dispositivo:"
+    DeviceLogger.info JSON.pretty_generate(response)
   end
 end
