@@ -39,14 +39,14 @@ module Devices
     end
 
     private
+
     def self.user_list(ws)
       command = {
         cmd: 'getuserlist',
         stn: true
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'getuserlist' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.user_info(ws, user)
@@ -56,8 +56,7 @@ module Devices
         backupnum: 10
       }
 
-      ws.send(command.to_json)
-      puts "commando 'getuserinfo' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.set_user_info(ws, user, name)
@@ -68,8 +67,7 @@ module Devices
         backupnum: 0
       }
 
-      ws.send(command.to_json)
-      puts "commando 'setuserinfo' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     # servidor retorna true para a operação, mas o user não é deletado do aparelho
@@ -79,8 +77,8 @@ module Devices
         enrollid: user,
         backupnum: 0 # Apaga todos os dados do usuário
       }
-      ws.send(command.to_json)
-      puts "comando 'deleteuser' enviado para o aparelho"
+
+      send_ws_command(ws, command)
     end
 
     def self.get_username(ws, user)
@@ -89,8 +87,7 @@ module Devices
         enrollid: user
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'getusername' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.set_username(ws, user, name)
@@ -105,8 +102,7 @@ module Devices
         ]
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'setusername' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.enable_user(ws, user, value)
@@ -116,8 +112,7 @@ module Devices
         enflag: value # valor pode ser 0 ou 1, 0 para desabilitar e 1 para habilitar
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'enableuser' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     # Remove todos os usuarios do equipamento
@@ -126,8 +121,7 @@ module Devices
         cmd: 'cleanuser'
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'enableuser' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.get_new_log(ws)
@@ -136,8 +130,7 @@ module Devices
         stn: true
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'getnewlog' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.get_all_log(ws, init_data, end_data)
@@ -148,8 +141,7 @@ module Devices
         to: end_data # Data final
       }
 
-      ws.send(command.to_json)
-      puts "Comando 'getalllog' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.clean_log(ws)
@@ -157,8 +149,7 @@ module Devices
         cmd: 'cleanlog'
       }
 
-      ws.send(command.to_json)
-      puts "Commando 'cleanlog' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     # Apaga todos os logs e todos os usuario, mas mantem as config
@@ -167,8 +158,7 @@ module Devices
         cmd: 'initsys'
       }
 
-      ws.send(command.to_json)
-      puts "Commando 'initsys' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.reboot(ws)
@@ -176,8 +166,7 @@ module Devices
         cmd: 'reboot'
       }
 
-      ws.send(command.to_json)
-      puts "Commando 'reboot' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.clean_admin(ws)
@@ -185,8 +174,7 @@ module Devices
         cmd: 'cleanadmin'
       }
 
-      ws.send(command.to_json)
-      puts "Commando 'cleanadmin' enviado para o aparelho"
+      send_ws_command(ws, command)
     end
 
     def self.set_time(ws, time)
@@ -195,8 +183,12 @@ module Devices
         cloudtime: time
       }
 
+      send_ws_command(ws, command)
+    end
+
+    def self.send_ws_command(ws, command)
       ws.send(command.to_json)
-      puts "Commando 'set_time' enviado para o aparelho"
+      puts "[Devices::Sender] Comando '#{command[:cmd]}' enviado para o aparelho"
     end
   end
 end
