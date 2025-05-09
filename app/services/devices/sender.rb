@@ -1,6 +1,24 @@
 module Devices
   module Sender
 
+    COMMANDS = {
+      'user_list' => ->(ws) { user_list(ws) },
+      'user_info' => ->(ws, *args) { user_info(ws, *args) },
+      'set_user_info' => ->(ws, *args) { set_user_info(ws, *args) },
+      'delete_user' => ->(ws, *args) { delete_user(ws, *args) },
+      'username' => ->(ws, *args) { get_username(ws, *args) },
+      'set_username' => ->(ws, *args) { set_username(ws, *args) },
+      'enable_user' => ->(ws, *args) { enable_user(ws, *args) },
+      'clean_user' => ->(ws) { clean_user(ws) },
+      'get_new_log' => ->(ws) { get_new_log(ws) },
+      'get_all_log' => ->(ws, *args) { get_all_log(ws, *args) },
+      'clean_log' => ->(ws) { clean_log(ws) },
+      'initsys' => ->(ws) { initsys(ws) },
+      'reboot' => ->(ws) { reboot(ws) },
+      'clean_admin' => ->(ws) { clean_admin(ws) },
+      'set_time' => ->(ws, *args) { set_time(ws, *args) }
+    }.freeze
+
     def self.send(ws, command, *args)
       case command
       when 'user_list'
