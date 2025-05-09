@@ -20,37 +20,10 @@ module Devices
     }.freeze
 
     def self.send(ws, command, *args)
-      case command
-      when 'user_list'
-        user_list(ws)
-      when 'user_info'
-        user_info(ws, *args)
-      when 'set_user_info'
-        set_user_info(ws, *args)
-      when 'delete_user'
-        delete_user(ws, *args)
-      when 'username'
-        get_username(ws, *args)
-      when 'set_username'
-        set_username(ws, *args)
-      when 'enable_user'
-        enable_user(ws, *args)
-      when 'clean_user'
-        clean_user(ws)
-      when 'get_new_log'
-        get_new_log(ws)
-      when 'get_all_log'
-        get_all_log(ws, *args)
-      when 'clean_log'
-        clean_log(ws)
-      when 'initsys'
-        initsys(ws)
-      when 'reboot'
-        reboot(ws)
-      when 'clean_admin'
-        clean_admin(ws)
-      when 'set_time'
-        set_time(ws, *args)
+      action = COMMANDS[command]
+
+      if action
+        action.call(ws, *args)
       else
         puts "Comando desconhecido: #{command}"
       end
