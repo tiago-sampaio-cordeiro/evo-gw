@@ -1,10 +1,11 @@
 require 'logger'
 
 module Devices
+  DeviceLogger = Logger.new($stdout)
   # Método para lidar com o comando de registro
   def self.handle_reg(message, ws)
-    puts "Registro recebido do dispositivo: #{message['sn']}"
-    puts JSON.pretty_generate(message)
+    DeviceLogger.info "Registro recebido do dispositivo: #{message['sn']}"
+    DeviceLogger.info JSON.pretty_generate(message)
 
     case message["cmd"]
     when "reg"
@@ -19,8 +20,8 @@ module Devices
       response_ws(ws, response)
 
     when "sendlog"
-      puts "Logs recebidos do dispositivo: #{message['sn']}"
-      puts "Total de logs: #{message['count']}"
+      DeviceLogger.info "Logs recebidos do dispositivo: #{message['sn']}"
+      DeviceLogger.info "Total de logs: #{message['count']}"
 
       response = {
         ret: 'sendlog',
