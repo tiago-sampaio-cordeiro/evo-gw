@@ -1,4 +1,8 @@
+require 'logger'
+
 class RedisSubscriberService
+  Logger = Logger.new($stdout)
+
   @subscribed_channels = {}
   @mutex = Mutex.new
 
@@ -15,7 +19,7 @@ class RedisSubscriberService
       subscriber = Redis.new(host: 'redis', port: 6379)
       loop do
         begin
-          puts "🔄 Subscrição ao canal Redis '#{channel}' iniciada..."
+          Logger.info "🔄 Subscrição ao canal Redis '#{channel}' iniciada..."
           subscriber.subscribe(channel) do |on|
             on.message do |_chan, message|
               mutex.synchronize do
@@ -24,7 +28,7 @@ class RedisSubscriberService
             end
           end
         rescue => e
-          puts "⚠️ Erro no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
+          Logger.info "⚠️ Erro no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
           sleep 2
           retry
         end

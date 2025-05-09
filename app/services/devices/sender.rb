@@ -1,5 +1,8 @@
+require 'logger'
+
 module Devices
   module Sender
+    LOGGER = Logger.new($stdout)
 
     COMMANDS = {
       'user_list' => ->(ws) { user_list(ws) },
@@ -25,7 +28,7 @@ module Devices
       if action
         action.call(ws, *args)
       else
-        puts "Comando desconhecido: #{command}"
+        LOGGER.error "Comando desconhecido: #{command}"
       end
     end
 
@@ -179,7 +182,7 @@ module Devices
 
     def self.send_ws_command(ws, command)
       ws.send(command.to_json)
-      puts "[Devices::Sender] Comando '#{command[:cmd]}' enviado para o aparelho"
+      LOGGER.info "[Devices::Sender] Comando '#{command[:cmd]}' enviado para o aparelho"
     end
   end
 end

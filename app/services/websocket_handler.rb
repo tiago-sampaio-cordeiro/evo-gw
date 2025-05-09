@@ -19,7 +19,7 @@ class WebSocketHandler
 
       # Evento de abertura
       ws.on :open do |event|
-        puts 'WebSocket aberto'
+        @logger.info 'WebSocket aberto'
 
         @mutex.synchronize do
           @connections << ws
@@ -39,7 +39,7 @@ class WebSocketHandler
           RedisSubscriberService.start(
             channel: channel,
             connections: @connections,
-            mutex: @mutex
+            mutex: @mutex,
           )
         end
 
@@ -48,12 +48,12 @@ class WebSocketHandler
 
       # Evento de erro
       ws.on :error do |event|
-        puts "Erro no WebSocket: #{event.message}"
+        @logger.error "Erro no WebSocket: #{event.message}"
       end
 
       # Evento de fechamento
       ws.on :close do |event|
-        puts "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
+        @logger.info "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
         @mutex.synchronize do
           @connections.delete(ws)
         end
