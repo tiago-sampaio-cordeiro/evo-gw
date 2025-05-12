@@ -1,107 +1,92 @@
 require 'rack'
+require 'rack/app'
 require 'faye/websocket'
 require 'redis'
 require 'logger'
 
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
+require_relative 'app/services/devices/sender'
+require_relative 'app/helpers/handle_ws_command_helper.rb'
 
-class Server
-  def initialize
-    @logger = Logger.new($stdout)
-    @redis = Redis.new(host: 'redis', port: 6379)
-    @channel = 'canal_teste'
-    @connections = []
-    @mutex = Mutex.new
+class Server < Rack::App
+  include HandleWsCommandHelper
 
-    RedisSubscriberService.start(
-      channel: @channel,
-      connections: @connections,
-      mutex: @mutex
-    )
+  LOGGER = Logger.new($stdout)
+  REDIS = Redis.new(host: 'redis', port: 6379)
+  CONNECTIONS = []
+  MUTEX = Mutex.new
+
+  CONFIG = {
+    redis: REDIS,
+    connections: CONNECTIONS,
+    mutex: MUTEX,
+    logger: LOGGER
+  }
+
+  # caminhos e variaveis para cada chamada função
+  GET_COMMAND_ROUTES = {
+    '/user_list'     => 'user_list',
+    '/user_info'     => ['user_info', 1],
+    '/username'      => ['username', 1],
+    '/new_log'       => 'get_new_log',
+    '/get_all_log'   => ['get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d")]
+  }
+
+  POST_COMMAND_ROUTES = {
+    '/set_user_info' => ['set_user_info', 1, "Pablo Pereira"],
+    '/delete_user'   => ['delete_user', 1],
+    '/set_username'  => ['set_username', 1, "pablito"],
+    '/enable_user'   => ['enable_user', 1, 1],
+    '/clean_user'    => 'clean_user',
+    '/clean_log'     => 'clean_log',
+    '/initsys'       => 'initsys',
+    '/reboot'        => 'reboot',
+    '/clean_admin' => 'clean_admin',
+    '/set_time' => ['set_time', Time.now]
+  }
+
+  # Laço de repetição para criar rotas GET
+  GET_COMMAND_ROUTES.each do |path, command|
+    get path do
+      if command.is_a?(Array)
+        handle_ws_command(current_ws, *command)
+      else
+        handle_ws_command(current_ws, command)
+      end
+    end
   end
 
-  def call(env)
-    request = Rack::Request.new(env)
-    case request.path_info
-    when "/"
-      if Faye::WebSocket.websocket?(env)
-        handler = WebSocketHandler.new(env, @redis, @connections, @mutex, @logger, @channel)
-        return handler.call
+  # Laço de repetição para criar rotas POST
+  POST_COMMAND_ROUTES.each do |path, command|
+    post path do
+      if command.is_a?(Array)
+        handle_ws_command(current_ws, *command)
       else
-        puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
-        [200, { 'content-type' => 'text/plain' }, ['Hello']]
+        handle_ws_command(current_ws, command)
       end
-    else
-      [404, { 'content-type' => 'text/plain' }, ['Página não encontrada']]
     end
+  end
+
+
+
+  get '/pub/chat' do
+    if Faye::WebSocket.websocket?(env)
+      handler = WebSocketHandler.new(self, CONFIG)
+      handler.call(env)
+    else
+      LOGGER.info "Requisição HTTP recebida: #{env['PATH_INFO']}"
+      [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
+    end
+  end
+
+  private
+  def current_ws
+    CONNECTIONS.first
   end
 end
 
-
-# # endpoint para testes entre dispositivos
-# get '/welcome' do
-#   send_file File.join(settings.public_folder, 'index.html') # Serve o arquivo HTML estático
-# end
-#
-# # endpoint do servidor
-# get '/' do
-#   if Faye::WebSocket.websocket?(request.env)
-#     handler = WebSocketHandler.new(request.env, redis, connections, connections_mutex, logger, channel)
-#     handler.call
-#   else
-#     puts "Requisição HTTP recebida: #{env['PATH_INFO']}"
-#     [200, { 'content-type' => 'text/plain' }, ['Hello']]
-#   end
-# end
-
-# logica relacionada ao EVO
-
-# Converte a mensagem recebida de JSON para um hash
-# message = JSON.parse(event.data)
-# if message['cmd'] == 'reg'
-#   logger.error "Registro recebido do dispositivo: #{message['sn']}"
-#   puts JSON.pretty_generate(message)
-#
-#   response = {
-#     ret: 'reg',
-#     result: true,
-#     cloudtime: Time.now.utc.iso8601,
-#     nosenduser: true
-#   }
-#
-#   ws.send(response.to_json)
-#   logger.info "Resposta enviada ao dispositivo:"
-#   puts JSON.pretty_generate(response)
-# elsif message['cmd'] == 'sendlog'
-#   logger.info "Logs recebidos do dispositivo: #{message['sn']}"
-#   logger.info "Total de logs: #{message['count']}"
-#
-#   # Iterar pelos registros de log recebidos
-#   if message['record']
-#     message['record'].each_with_index do |log, index|
-#       puts "Log #{index + 1}:"
-#       puts JSON.pretty_generate(log)
-#     end
-#   else
-#     logger.info "Nenhum registro de log encontrado"
-#   end
-#
-#   response = {
-#     ret: 'sendlog',
-#     result: true,
-#     count: message['count'],
-#     logindex: message['logindex'],
-#     cloudtime: Time.now.utc.iso8601,
-#     access: 1,
-#     message: 'Logs recebidos com sucesso'
-#   }
-#
-#   ws.send(response.to_json)
-#   logger.info "Resposta enviada ao dispositivo:"
-#   puts JSON.pretty_generate(response)
-#
-# else
-#   logger.info "Comando não reconhecido: #{message['cmd']}"
-#   ws.send({ ret: 'error', reason: 'Unknown command' }.to_json)
-# end
+# TODO
+# Esta sendo recuperado a primeira conexão de forma estatica para desenvolvimento
+# Os valores como id do usuario e datas estão sendo passados fixo para teste dos metodos
+# Será feita uma nova branch para criação do mocks para sumulação de requisição vinda do PTRP

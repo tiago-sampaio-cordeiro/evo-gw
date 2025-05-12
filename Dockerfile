@@ -24,4 +24,4 @@ USER appuser
 EXPOSE 9292
 
 # Comando para iniciar o servidor
-CMD ["rackup", "--host", "0.0.0.0", "-p", "9292"]
+CMD ["bundle", "exec", "rackup", "--host", "0.0.0.0", "-p", "9292"]

@@ -1,3 +1,3 @@
 require_relative 'server'
 
-run Server.new
+run Server
