@@ -8,6 +8,7 @@ require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
 require_relative 'app/services/devices/sender'
 require_relative 'app/helpers/handle_ws_command_helper.rb'
+require_relative 'app/ptrp_filter_info'
 
 class Server < Rack::App
   include HandleWsCommandHelper
@@ -78,6 +79,11 @@ class Server < Rack::App
       LOGGER.info "Requisição HTTP recebida: #{env['PATH_INFO']}"
       [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
     end
+  end
+
+  get '/' do
+    equipment = PtrpFilterInfo.new
+    list = equipment.present_on_the_list(REDIS)
   end
 
   private
