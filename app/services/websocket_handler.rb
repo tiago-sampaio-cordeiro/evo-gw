@@ -33,6 +33,10 @@ class WebSocketHandler
         next unless sn
 
         channel = sn
+        @redis.set("ns", sn)
+        if message['cmd'] == 'reg'
+          @redis.set("equipamento", JSON.dump(message))
+        end
 
         # Inicia subscrição dinâmica se ainda não existe
         unless RedisSubscriberService.subscribed?(channel)
