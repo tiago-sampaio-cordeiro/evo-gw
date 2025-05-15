@@ -27,22 +27,22 @@ class Server < Rack::App
 
   # caminhos e variaveis para cada chamada função
   GET_COMMAND_ROUTES = {
-    '/user_list'     => 'user_list',
-    '/user_info'     => ['user_info', 1],
-    '/username'      => ['username', 1],
-    '/new_log'       => 'get_new_log',
-    '/get_all_log'   => ['get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d")]
+    '/user_list' => 'user_list',
+    '/user_info' => ['user_info', 1],
+    '/username' => ['username', 1],
+    '/new_log' => 'get_new_log',
+    '/get_all_log' => ['get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d")]
   }
 
   POST_COMMAND_ROUTES = {
-    '/set_user_info' => ['set_user_info', 1, "Pablo Pereira"],
-    '/delete_user'   => ['delete_user', 1],
-    '/set_username'  => ['set_username', 1, "pablito"],
-    '/enable_user'   => ['enable_user', 1, 1],
-    '/clean_user'    => 'clean_user',
-    '/clean_log'     => 'clean_log',
-    '/initsys'       => 'initsys',
-    '/reboot'        => 'reboot',
+    '/set_user_info' => { command: 'set_user_info', params: %w[id name] },
+    '/delete_user' => ['delete_user', 1],
+    '/set_username' => ['set_username', 1, "pablito"],
+    '/enable_user' => ['enable_user', 1, 1],
+    '/clean_user' => 'clean_user',
+    '/clean_log' => 'clean_log',
+    '/initsys' => 'initsys',
+    '/reboot' => 'reboot',
     '/clean_admin' => 'clean_admin',
     '/set_time' => ['set_time', Time.now]
   }
@@ -59,17 +59,23 @@ class Server < Rack::App
   end
 
   # Laço de repetição para criar rotas POST
-  POST_COMMAND_ROUTES.each do |path, command|
+  POST_COMMAND_ROUTES.each do |path, config|
     post path do
-      if command.is_a?(Array)
-        handle_ws_command(current_ws, *command)
+      if config.is_a?(Hash)
+        req = Rack::Request.new(env)
+        puts "Parâmetros esperados: #{config[:params].inspect}"
+        puts "Parâmetros recebidos: #{req.POST.inspect}"
+
+        args = config[:params].map do |param|
+          valor = req.POST[param]
+          valor
+        end
+        handle_ws_command(current_ws, config[:command], *args)
       else
-        handle_ws_command(current_ws, command)
+        handle_ws_command(current_ws, *Array(config))
       end
     end
   end
-
-
 
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
@@ -87,6 +93,7 @@ class Server < Rack::App
   end
 
   private
+
   def current_ws
     CONNECTIONS.first
   end

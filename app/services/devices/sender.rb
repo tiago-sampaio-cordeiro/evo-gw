@@ -56,7 +56,7 @@ module Devices
     def self.set_user_info(ws, user, name)
       command = {
         cmd: 'setuserinfo',
-        enrollid: user,
+        enrollid: user.to_i,
         name: name,
         backupnum: 0
       }
