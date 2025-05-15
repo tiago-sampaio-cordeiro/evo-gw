@@ -1,4 +1,5 @@
 require_relative 'mocks/equipment_mock'
+require_relative 'mocks/employee_mock'
 require 'redis'
 require 'net/http'
 require 'uri'
@@ -14,13 +15,23 @@ class PtrpFilterInfo
     end
   end
 
+  def employee_filter
+    EmployeeMock.employees.map do |employee|
+      {
+        id: employee[:cpf] || employee[:pis] || employee[:uid],
+        name: employee[:name],
+      }
+    end
+  end
+
   def present_on_the_list(redis)
     list_equipaments = equipment_filter
     sn = redis.get("sn")
 
     if list_equipaments.none? { |equipment| equipment[:nserie_rep] == sn }
       puts "não presente"
-      add_equipment(redis)Cre
+      add_equipment(redis)
+      add_employees(employee_filter)
     end
   end
 
@@ -42,5 +53,19 @@ class PtrpFilterInfo
       "app": false,
       "empresa_uid": 'a43bedds-ba77-4062-46c0-58f4444dad33'
     }
+  end
+
+  def add_employees(employees_list)
+    employees_list.each do |employee|
+      uri = URI.parse("http://localhost:9292/set_user_info")
+      req = Net::HTTP::Post.new(uri)
+      req.set_form_data({ id: employee[:id].to_s, name: employee[:name] })
+
+      res = Net::HTTP.start(uri.hostname, uri.port) do |http|
+        http.request(req)
+      end
+
+      puts "[INFO] Resposta do servidor: #{res.body}"
+    end
   end
 end
