@@ -4,13 +4,15 @@ require 'eventmachine'
 require_relative 'devices/evo'
 
 class WebSocketHandler
+
+  GLOBAL_SENDLOG_CHANNEL = 'sendlog_channel'.freeze
+
   def initialize(app, config = {})
     @app = app
     @redis = config[:redis]
     @connections = config[:connections]
     @mutex = config[:mutex]
     @logger = config[:logger]
-    @channel = config[:channel]
   end
 
   def call(env)
@@ -22,7 +24,7 @@ class WebSocketHandler
         @logger.info 'WebSocket aberto'
 
         @mutex.synchronize do
-          @connections << ws
+          @connections[ws.object_id] = ws
         end
       end
 
@@ -30,20 +32,26 @@ class WebSocketHandler
       ws.on :message do |event|
         message = JSON.parse(event.data)
         sn = message['sn']
+        command = message['cmd']
         next unless sn
 
-        channel = sn
+        Devices.handle_reg(message, ws)
 
-        # Inicia subscrição dinâmica se ainda não existe
-        unless RedisSubscriberService.subscribed?(channel)
-          RedisSubscriberService.start(
-            channel: channel,
-            connections: @connections,
-            mutex: @mutex,
-          )
+        if command == 'sendlog'
+          @logger.info "Recebido sendlog de #{sn}"
+          @redis.publish(GLOBAL_SENDLOG_CHANNEL, event.data)
+          next
         end
 
-        Devices.handle_reg(message, ws)
+        # Inicia subscrição dinâmica se ainda não existe
+        unless RedisSubscriberService.subscribed?(sn)
+          RedisSubscriberService.start(
+            channel: sn,
+            ws: ws,
+            mutex: @mutex,
+            logger: @logger
+          )
+        end
       end
 
       # Evento de erro
@@ -55,9 +63,8 @@ class WebSocketHandler
       ws.on :close do |event|
         @logger.info "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
         @mutex.synchronize do
-          @connections.delete(ws)
+          @connections.delete(ws.object_id)
         end
-
         ws = nil
       end
 
