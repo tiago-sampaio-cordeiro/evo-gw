@@ -14,7 +14,7 @@ class Server < Rack::App
 
   LOGGER = Logger.new($stdout)
   REDIS = Redis.new(host: 'redis', port: 6379)
-  CONNECTIONS = []
+  CONNECTIONS = {}
   MUTEX = Mutex.new
 
   CONFIG = {
@@ -50,9 +50,9 @@ class Server < Rack::App
   GET_COMMAND_ROUTES.each do |path, command|
     get path do
       if command.is_a?(Array)
-        handle_ws_command(current_ws, *command)
+        handle_ws_command(*command)
       else
-        handle_ws_command(current_ws, command)
+        handle_ws_command(command)
       end
     end
   end
@@ -61,9 +61,9 @@ class Server < Rack::App
   POST_COMMAND_ROUTES.each do |path, command|
     post path do
       if command.is_a?(Array)
-        handle_ws_command(current_ws, *command)
+        handle_ws_command(*command)
       else
-        handle_ws_command(current_ws, command)
+        handle_ws_command(command)
       end
     end
   end
@@ -79,14 +79,8 @@ class Server < Rack::App
       [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
     end
   end
-
-  private
-  def current_ws
-    CONNECTIONS.first
-  end
 end
 
 # TODO
-# Esta sendo recuperado a primeira conexão de forma estatica para desenvolvimento
 # Os valores como id do usuario e datas estão sendo passados fixo para teste dos metodos
 # Será feita uma nova branch para criação do mocks para sumulação de requisição vinda do PTRP
