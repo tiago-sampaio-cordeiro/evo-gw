@@ -23,12 +23,26 @@ class RedisSubscriberService
 
         subscriber.subscribe(channel) do |on|
           on.message do |_chan, message|
-            mutex.synchronize do
-              ws.send(message)
+            begin
+              payload = JSON.parse(message)
+
+              command = payload['cmd']
+              args = payload['args'] || []
+
+              if command
+                mutex.synchronize do
+                  Devices::Sender.send(ws, command, *args)
+                end
+              else
+                LOGGER.warn "⚠️ Payload recebido sem comando no canal '#{channel}': #{payload}"
+              end
+            rescue JSON::ParserError => e
+              LOGGER.error "❌ Erro ao fazer parse do JSON no canal '#{channel}': #{e.message}"
+            rescue => e
+              LOGGER.error "❌ Erro ao processar comando no canal '#{channel}': #{e.message}"
             end
           end
         end
-
 
       rescue Redis::CannotConnectError => e
         LOGGER.error "⚠️ Falha ao conectar no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
