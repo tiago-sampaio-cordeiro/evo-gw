@@ -24,52 +24,6 @@ class Server < Rack::App
     logger: LOGGER
   }
 
-  # caminhos e variaveis para cada chamada função
-  GET_COMMAND_ROUTES = {
-    '/user_list'     => 'user_list',
-    '/user_info'     => ['user_info', 1],
-    '/username'      => ['username', 1],
-    '/new_log'       => 'get_new_log',
-    '/get_all_log'   => ['get_all_log', "2025-01-01", Time.now.strftime("%Y-%m-%d")]
-  }
-
-  POST_COMMAND_ROUTES = {
-    '/set_user_info' => ['set_user_info', 1, "Pablo Pereira"],
-    '/delete_user'   => ['delete_user', 1],
-    '/set_username'  => ['set_username', 1, "pablito"],
-    '/enable_user'   => ['enable_user', 1, 1],
-    '/clean_user'    => 'clean_user',
-    '/clean_log'     => 'clean_log',
-    '/initsys'       => 'initsys',
-    '/reboot'        => 'reboot',
-    '/clean_admin' => 'clean_admin',
-    '/set_time' => ['set_time', Time.now]
-  }
-
-  # Laço de repetição para criar rotas GET
-  GET_COMMAND_ROUTES.each do |path, command|
-    get path do
-      if command.is_a?(Array)
-        handle_ws_command(*command)
-      else
-        handle_ws_command(command)
-      end
-    end
-  end
-
-  # Laço de repetição para criar rotas POST
-  POST_COMMAND_ROUTES.each do |path, command|
-    post path do
-      if command.is_a?(Array)
-        handle_ws_command(*command)
-      else
-        handle_ws_command(command)
-      end
-    end
-  end
-
-
-
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
       handler = WebSocketHandler.new(self, CONFIG)
@@ -79,8 +33,31 @@ class Server < Rack::App
       [200, { 'Content-Type' => 'text/plain' }, ['Hello']]
     end
   end
-end
 
-# TODO
-# Os valores como id do usuario e datas estão sendo passados fixo para teste dos metodos
-# Será feita uma nova branch para criação do mocks para sumulação de requisição vinda do PTRP
+  post '/:channel/:command' do
+    channel = params['channel']
+    command = params['command']
+    args = []
+
+    # Lista de comandos que NÃO precisam de body
+    commands_without_body = ['user_list']
+
+    unless commands_without_body.include?(command)
+      begin
+        body = request.body.read.strip
+        if body.empty?
+          LOGGER.error "❌ Corpo da requisição vazio para comando '#{command}'"
+          return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Missing JSON body' }.to_json]]
+        end
+        parsed = JSON.parse(body)
+        args = parsed.is_a?(Hash) ? parsed.values : parsed
+      rescue JSON::ParserError => e
+        LOGGER.error "❌ JSON inválido recebido: #{e.message}"
+        return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Invalid JSON' }.to_json]]
+      end
+    end
+
+    handle_ws_command(channel, command, *args, config: CONFIG)
+    [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched' }.to_json]]
+  end
+end
