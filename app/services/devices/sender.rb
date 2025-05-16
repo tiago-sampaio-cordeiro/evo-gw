@@ -53,12 +53,13 @@ module Devices
       send_ws_command(ws, command)
     end
 
-    def self.set_user_info(ws, user, name)
+    def self.set_user_info(ws, user, name,record)
       command = {
         cmd: 'setuserinfo',
         enrollid: user,
         name: name,
-        backupnum: 0
+        backupnum: 10,
+        record: record
       }
 
       send_ws_command(ws, command)
@@ -69,7 +70,7 @@ module Devices
       command = {
         cmd: 'deleteuser',
         enrollid: user,
-        backupnum: 0 # Apaga todos os dados do usuário
+        backupnum: 10 # Apaga todos os dados do usuário
       }
 
       send_ws_command(ws, command)
