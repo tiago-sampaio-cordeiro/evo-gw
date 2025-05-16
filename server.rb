@@ -15,7 +15,7 @@ class Server < Rack::App
 
   LOGGER = Logger.new($stdout)
   REDIS = Redis.new(host: 'redis', port: 6379)
-  CONNECTIONS = []
+  CONNECTIONS = {}
   MUTEX = Mutex.new
 
   CONFIG = {
@@ -24,62 +24,6 @@ class Server < Rack::App
     mutex: MUTEX,
     logger: LOGGER
   }
-
-  # caminhos e variaveis para cada chamada função
-  GET_COMMAND_ROUTES = {
-    '/user_list' => 'user_list',
-    '/user_info' => { command: 'user_info', params: %w[id]},
-    '/username' => { command: 'username', params: %w[id]},
-    '/new_log' => 'get_new_log',
-    '/get_all_log' => { command: 'get_all_log', params: %w[init_date end_date]} #"2025-01-01", Time.now.strftime("%Y-%m-%d")
-  }
-
-  POST_COMMAND_ROUTES = {
-    '/set_user_info' => { command: 'set_user_info', params: %w[id name] },
-    '/delete_user' => { command: 'delete_user', params: %w[id] },
-    '/set_username' => [command: 'set_username', params: %w[id name]],
-    '/enable_user' => { command: 'enable_user', params: %w[id enable] }, # enable: 0 ou 1
-    '/clean_user' => 'clean_user',
-    '/clean_log' => 'clean_log',
-    '/initsys' => 'initsys',
-    '/reboot' => 'reboot',
-    '/clean_admin' => 'clean_admin',
-    '/set_time' => { command: 'set_time', params: %w[time]} # time: Time.now
-  }
-
-  # Laço de repetição para criar rotas GET
-  GET_COMMAND_ROUTES.each do |path, config|
-    get path do
-      if config.is_a?(Hash)
-        req = Rack::Request.new(env)
-
-        args = config[:params].map do |param|
-          valor = req.POST[param]
-          valor
-        end
-        handle_ws_command(current_ws, *args)
-      else
-        handle_ws_command(current_ws, *Array(config))
-      end
-    end
-  end
-
-  # Laço de repetição para criar rotas POST
-  POST_COMMAND_ROUTES.each do |path, config|
-    post path do
-      if config.is_a?(Hash)
-        req = Rack::Request.new(env)
-
-        args = config[:params].map do |param|
-          valor = req.POST[param]
-          valor
-        end
-        handle_ws_command(current_ws, config[:command], *args)
-      else
-        handle_ws_command(current_ws, *Array(config))
-      end
-    end
-  end
 
   get '/pub/chat' do
     if Faye::WebSocket.websocket?(env)
@@ -91,19 +35,30 @@ class Server < Rack::App
     end
   end
 
-  get '/' do
-    equipment = PtrpFilterInfo.new
-    list = equipment.present_on_the_list(REDIS)
-  end
+  post '/:channel/:command' do
+    channel = params['channel']
+    command = params['command']
+    args = []
 
-  private
+    # Lista de comandos que NÃO precisam de body
+    commands_without_body = ['user_list']
 
-  def current_ws
-    CONNECTIONS.first
+    unless commands_without_body.include?(command)
+      begin
+        body = request.body.read.strip
+        if body.empty?
+          LOGGER.error "❌ Corpo da requisição vazio para comando '#{command}'"
+          return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Missing JSON body' }.to_json]]
+        end
+        parsed = JSON.parse(body)
+        args = parsed.is_a?(Hash) ? parsed.values : parsed
+      rescue JSON::ParserError => e
+        LOGGER.error "❌ JSON inválido recebido: #{e.message}"
+        return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Invalid JSON' }.to_json]]
+      end
+    end
+
+    handle_ws_command(channel, command, *args, config: CONFIG)
+    [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched' }.to_json]]
   end
 end
-
-# TODO
-# Esta sendo recuperado a primeira conexão de forma estatica para desenvolvimento
-# Os valores como id do usuario e datas estão sendo passados fixo para teste dos metodos
-# Será feita uma nova branch para criação do mocks para sumulação de requisição vinda do PTRP
