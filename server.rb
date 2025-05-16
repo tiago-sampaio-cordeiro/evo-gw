@@ -8,6 +8,7 @@ require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
 require_relative 'app/services/devices/sender'
 require_relative 'app/helpers/handle_ws_command_helper.rb'
+require_relative 'app/ptrp_filter_info'
 
 class Server < Rack::App
   include HandleWsCommandHelper
