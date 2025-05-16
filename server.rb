@@ -35,7 +35,7 @@ class Server < Rack::App
     end
   end
 
-  post '/:channel/:command' do
+  post 'pub/chat/:channel/:command' do
     channel = params['channel']
     command = params['command']
     args = []
