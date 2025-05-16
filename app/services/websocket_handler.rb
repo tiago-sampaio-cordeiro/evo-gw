@@ -21,11 +21,11 @@ class WebSocketHandler
 
       # Evento de abertura
       ws.on :open do |event|
-        @logger.info 'WebSocket aberto'
-
         @mutex.synchronize do
-          @connections[ws.object_id] = ws
+          @connections[ws] = nil
         end
+        client_ip = env['REMOTE_ADDR'] || 'Desconhecido'
+        @logger.info "Cliente conectado: #{client_ip}"
       end
 
       # Evento de mensagem
@@ -33,7 +33,11 @@ class WebSocketHandler
         message = JSON.parse(event.data)
         sn = message['sn']
         command = message['cmd']
-        next unless sn
+        if sn
+          @mutex.synchronize do
+            @connections[sn] = ws
+          end
+        end
 
         Devices.handle_reg(message, ws)
 
@@ -63,7 +67,8 @@ class WebSocketHandler
       ws.on :close do |event|
         @logger.info "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
         @mutex.synchronize do
-          @connections.delete(ws.object_id)
+          sn = @connections.key(ws)
+          @connections.delete(sn)
         end
         ws = nil
       end
