@@ -40,7 +40,7 @@ class Server < Rack::App
     args = []
 
     # Lista de comandos que NÃO precisam de body
-    commands_without_body = ['user_list', 'clean_user']
+    commands_without_body = ['user_list', 'clean_user', 'get_new_log', 'clean_log', 'initsys', 'reboot', 'clean_admin']
 
     if !commands_without_body.include?(command)
       begin
