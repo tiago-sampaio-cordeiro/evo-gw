@@ -60,6 +60,7 @@ class Server < Rack::App
           end
         else
           args = parsed.is_a?(Hash) ? parsed.values : parsed
+          handle_ws_command(channel, command, *args, config: CONFIG)
         end
       rescue JSON::ParserError => e
         LOGGER.error "❌ JSON inválido recebido: #{e.message}"
@@ -67,7 +68,6 @@ class Server < Rack::App
       end
     end
 
-    handle_ws_command(channel, command, *args, config: CONFIG)
     [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched' }.to_json]]
   end
 end
