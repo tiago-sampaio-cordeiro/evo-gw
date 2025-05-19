@@ -4,6 +4,7 @@ GEM
     base64 (0.2.0)
     connection_pool (2.5.0)
     daemons (1.4.1)
+    diff-lcs (1.6.2)
     dotenv (3.1.8)
     eventmachine (1.2.7)
     faye-websocket (0.11.3)
@@ -28,12 +29,27 @@ GEM
     rack-session (2.1.0)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
+    rack-test (2.2.0)
+      rack (>= 1.3)
     rackup (2.2.1)
       rack (>= 3)
     redis (5.4.0)
       redis-client (>= 0.22.0)
     redis-client (0.24.0)
       connection_pool
+    rspec (3.13.0)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.3)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.4)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.4)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.3)
     ruby2_keywords (0.0.5)
     sidekiq (8.0.1)
       connection_pool (>= 2.5.0)
@@ -75,8 +91,10 @@ DEPENDENCIES
   puma (~> 6.0)
   rack
   rack-app
+  rack-test
   rackup
   redis
+  rspec
   sidekiq
   sinatra (~> 4.1.1)
   sinatra-contrib
