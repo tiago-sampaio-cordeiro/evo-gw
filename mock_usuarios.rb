@@ -10,7 +10,7 @@ usuarios = []
   senha = rand(10**7..10**8 - 1) # Gera número entre 1000000 e 99999999
   nome = Faker::Name.first_name
 
-  usuarios << [cpf, nome, senha]
+  usuarios << {cpf: cpf, nome: nome, senha: senha}
 end
 
 File.open("mock_usuarios.json", "w") do |file|
