@@ -53,7 +53,7 @@ module Devices
       send_ws_command(ws, command)
     end
 
-    def self.set_user_info(ws, user, name,record)
+    def self.set_user_info(ws, user, name, record)
       command = {
         cmd: 'setuserinfo',
         enrollid: user.to_i,
