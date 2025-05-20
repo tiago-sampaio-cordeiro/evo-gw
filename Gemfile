@@ -32,4 +32,6 @@ gem 'sidekiq'
 # gem para variaveis de ambiente ".env"
 gem 'dotenv'
 
+gem 'faker'
+
 
