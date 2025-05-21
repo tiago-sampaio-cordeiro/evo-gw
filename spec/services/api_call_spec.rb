@@ -33,7 +33,7 @@ describe ApiCallService do
       expect(described_class.authenticate_user).to be_nil
     end
 
-    it 'retorna nil se algum dos headers estiver vazio' do
+    it 'returns nil if any of the headers are empty' do
       stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
         .with(body: { 'login' => 'admin', 'password' => 'diwbb00256' })
         .to_return(
@@ -48,5 +48,7 @@ describe ApiCallService do
       auth = described_class.authenticate_user
       expect(auth).to be_nil
     end
+
+
   end
 end
