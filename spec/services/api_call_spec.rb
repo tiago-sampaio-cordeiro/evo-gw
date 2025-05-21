@@ -49,6 +49,35 @@ describe ApiCallService do
       expect(auth).to be_nil
     end
 
+    describe '.equipment' do
+      it 'returns the list of equipment' do
+        equipamentos = attributes_for_list(:equipment, 3)
+        body = equipamentos.to_json
 
+        stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
+          .to_return(
+            body: 'ok',
+            headers: {
+              'uid' => 'fake_uid',
+              'access-token' => 'fake_token',
+              'client' => 'fake_client'
+            }
+          )
+
+        stub_request(:get, "http://fakeapi.com/v1/equipamentos")
+          .with(headers: {
+            'uid' => 'fake_uid',
+            'access-token' => 'fake_token',
+            'client' => 'fake_client'
+          })
+          .to_return(body: body)
+
+        result = described_class.equipment
+        parsed = JSON.parse(result)
+
+        expect(parsed.size).to eq(3)
+        expect(parsed.first["name"]).to include("Equipamento")
+      end
+    end
   end
 end
