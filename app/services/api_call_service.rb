@@ -7,18 +7,22 @@ module ApiCallService
     full_path = uri + path
     res = Net::HTTP.post_form(full_path, 'login' => 'admin', 'password' => 'diwbb00256')
 
-    if res.body.nil? || res.body.empty?
-      return nil
-    else
-      headers = res.to_hash
+    return nil if res.body.nil? || res.body.empty?
 
-      return {
-        uid: headers['uid']&.first,
-        access_token: headers['access-token']&.first,
-        client: headers['client']&.first
-      }
-    end
+    headers = res.to_hash
+    uid = headers['uid']&.first
+    token = headers['access-token']&.first
+    client = headers['client']&.first
+
+    return nil if uid.to_s.strip.empty? || token.to_s.strip.empty? || client.to_s.strip.empty?
+
+    {
+      uid: uid,
+      access_token: token,
+      client: client
+    }
   end
+
 
   def self.equipment
     auth_data = authenticate_user
