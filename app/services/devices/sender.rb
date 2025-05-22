@@ -184,6 +184,9 @@ module Devices
     def self.send_ws_command(ws, command)
       ws.send(command.to_json)
       LOGGER.info "[Devices::Sender] Comando '#{command[:cmd]}' enviado para o aparelho"
+    rescue StandardError => e
+      LOGGER.error "[Devices::Sender] Erro ao enviar comando '#{command[:cmd]}': #{e.message}"
     end
+
   end
 end
