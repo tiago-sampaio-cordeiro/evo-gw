@@ -39,4 +39,6 @@ gem 'faker'
 group :test do
   gem 'rspec'
   gem 'rack-test'
+  gem 'webmock'
+  gem 'factory_bot'
 end
