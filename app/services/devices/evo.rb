@@ -1,4 +1,6 @@
 require 'logger'
+require 'time'
+
 
 module Devices
   DeviceLogger = Logger.new($stdout)

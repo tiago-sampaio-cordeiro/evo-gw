@@ -53,7 +53,7 @@ module Devices
       send_ws_command(ws, command)
     end
 
-    def self.set_user_info(ws, user, name,record)
+    def self.set_user_info(ws, user, name, record)
       command = {
         cmd: 'setuserinfo',
         enrollid: user.to_i,
@@ -184,6 +184,9 @@ module Devices
     def self.send_ws_command(ws, command)
       ws.send(command.to_json)
       LOGGER.info "[Devices::Sender] Comando '#{command[:cmd]}' enviado para o aparelho"
+    rescue StandardError => e
+      LOGGER.error "[Devices::Sender] Erro ao enviar comando '#{command[:cmd]}': #{e.message}"
     end
+
   end
 end
