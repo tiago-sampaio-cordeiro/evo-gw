@@ -26,6 +26,17 @@ describe ApiCallService do
       expect(auth[:client]).to eq('fake_client')
     end
 
+    it 'credential incorrect' do
+      stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
+        .with(body: { 'login' => 'testUser', 'password' => 'diwbb00256' })
+        .to_return(
+          body: 'Error',
+        )
+
+      auth = described_class.authenticate_user('testUser', 'diwbb00256')
+      expect(auth).to eq(nil)
+    end
+
     it 'returns nil when the response body is empty' do
       stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
         .to_return(body: '', headers: {})
