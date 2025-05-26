@@ -1,11 +1,13 @@
 require 'dotenv/load'
 
 module ApiCallService
-  def self.authenticate_user
+  def self.authenticate_user(login, password)
     uri = URI(ENV['API_HOST'])
     path = '/v1/auth/sign_in'
     full_path = uri + path
-    res = Net::HTTP.post_form(full_path, 'login' => 'admin', 'password' => 'diwbb00256')
+    res = Net::HTTP.post_form(full_path, 'login' => login, 'password' => password)
+
+    return res.body if res.body == 'Error'
 
     return nil if res.body.nil? || res.body.empty?
 
