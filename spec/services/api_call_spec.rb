@@ -10,7 +10,7 @@ describe ApiCallService do
   describe '.authenticate_user' do
     it 'returns the request headers' do
       stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
-        .with(body: { 'login' => 'admin', 'password' => 'diwbb00256' })
+        .with(body: { 'login' => 'user_test', 'password' => 'password' })
         .to_return(
           body: 'Success',
           headers: {
@@ -20,7 +20,7 @@ describe ApiCallService do
           }
         )
 
-      auth = described_class.authenticate_user
+      auth = described_class.authenticate_user('user_test', 'password')
       expect(auth[:uid]).to eq('fake_uid')
       expect(auth[:access_token]).to eq('fake_token')
       expect(auth[:client]).to eq('fake_client')
@@ -28,12 +28,12 @@ describe ApiCallService do
 
     it 'credential incorrect' do
       stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
-        .with(body: { 'login' => 'testUser', 'password' => 'diwbb00256' })
+        .with(body: { 'login' => 'user_test', 'password' => 'diwbb00256' })
         .to_return(
           body: 'Error',
         )
 
-      auth = described_class.authenticate_user('testUser', 'diwbb00256')
+      auth = described_class.authenticate_user('user_test', 'diwbb00256')
       expect(auth).to eq(nil)
     end
 
@@ -41,12 +41,12 @@ describe ApiCallService do
       stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
         .to_return(body: '', headers: {})
 
-      expect(described_class.authenticate_user).to be_nil
+      expect(described_class.authenticate_user('user_test', 'password')).to be_nil
     end
 
     it 'returns nil if any of the headers are empty' do
       stub_request(:post, "http://fakeapi.com/v1/auth/sign_in")
-        .with(body: { 'login' => 'admin', 'password' => 'diwbb00256' })
+        .with(body: { 'login' => 'user_test', 'password' => 'password' })
         .to_return(
           body: 'Success',
           headers: {
@@ -56,7 +56,7 @@ describe ApiCallService do
           }
         )
 
-      auth = described_class.authenticate_user
+      auth = described_class.authenticate_user('user_test', 'password')
       expect(auth).to be_nil
     end
 
