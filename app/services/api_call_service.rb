@@ -7,8 +7,6 @@ module ApiCallService
     full_path = uri + path
     res = Net::HTTP.post_form(full_path, 'login' => login, 'password' => password)
 
-    return res.body if res.body == 'Error'
-
     return nil if res.body.nil? || res.body.empty?
 
     headers = res.to_hash
@@ -27,7 +25,9 @@ module ApiCallService
 
 
   def self.equipment
-    auth_data = authenticate_user
+    auth_data = authenticate_user('admin', 'diwbb00256')
+
+    return 'Erro na autenticação' if auth_data.nil?
 
     # Faz a requisição GET autenticada
     uri = URI(ENV['API_HOST'])
