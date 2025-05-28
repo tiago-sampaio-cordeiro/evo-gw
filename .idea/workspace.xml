@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e7bbc751-52b9-4530-8373-73165f68af3a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+    <list default="true" id="e7bbc751-52b9-4530-8373-73165f68af3a" name="Changes" comment="[DEV-174] Feature: Remove file">
+      <change afterPath="$PROJECT_DIR$/spec/services/websocket_handler_spec.rb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/evo-gw.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/evo-gw.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Gemfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Gemfile.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,27 +33,23 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;Ruby.redis_subscriber_service.executor&quot;: &quot;Run&quot;,
-    &quot;Ruby.server.executor&quot;: &quot;Debug&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;DEV-174&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/tiago/projetos-ponto-gestor/henry-gw&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/pablo/RubymineProjects/evo-gw&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;ruby.structure.view.model.defaults.configured&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.tools&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/test" />
-      <recent name="$PROJECT_DIR$/app/services" />
-      <recent name="$PROJECT_DIR$/app/services/channels" />
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RubyModuleManagerSettings">
@@ -60,7 +59,12 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Ruby.redis_subscriber_service">
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="rspec --init" />
+    </option>
+  </component>
+  <component name="RunManager">
     <configuration default="true" type="RackRunConfigurationType" factoryName="Rack">
       <RACK_CONFIG_SETTINGS_ID NAME="RUBY_ARGS" VALUE="" />
       <RACK_CONFIG_SETTINGS_ID NAME="WORK DIR" VALUE="$PROJECT_DIR$" />
@@ -76,35 +80,31 @@
       <RACK_CONFIG_SETTINGS_ID NAME="LAUNCH_JS" VALUE="false" />
       <method v="2" />
     </configuration>
-    <configuration name="redis_subscriber_service" type="RubyRunConfigurationType" factoryName="Ruby">
-      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$PROJECT_DIR$" />
-      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
-      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
+    <configuration default="true" type="RackRunConfigurationType" factoryName="Rack">
+      <RACK_CONFIG_SETTINGS_ID NAME="RUBY_ARGS" VALUE="" />
+      <RACK_CONFIG_SETTINGS_ID NAME="WORK DIR" VALUE="$PROJECT_DIR$" />
+      <RACK_CONFIG_SETTINGS_ID NAME="SHOULD_USE_SDK" VALUE="false" />
+      <RACK_CONFIG_SETTINGS_ID NAME="ALTERN_SDK_NAME" VALUE="" />
+      <RACK_CONFIG_SETTINGS_ID NAME="myPassParentEnvs" VALUE="true" />
       <EXTENSION ID="BundlerRunConfigurationExtension" BUNDLE_MODE="AUTO" bundleExecEnabled="true" />
+      <EXTENSION ID="RubyCoverageRunConfigurationExtension" track_test_folders="true" runner="rcov" ENABLE_BRANCH_COVERAGE="true" ENABLE_FORKED_COVERAGE="true">
+        <COVERAGE_PATTERN ENABLED="true">
+          <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
+        </COVERAGE_PATTERN>
+      </EXTENSION>
       <EXTENSION ID="org.jetbrains.plugins.ruby.rails.run.RailsRunConfigurationExtension" SCRATCH_USE_RAILS_RUNNER="false" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$PROJECT_DIR$/app/services/redis_subscriber_service.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="server" type="RubyRunConfigurationType" factoryName="Ruby">
-      <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="WORK DIR" VALUE="$PROJECT_DIR$" />
-      <RUBY_RUN_CONFIG NAME="SHOULD_USE_SDK" VALUE="false" />
-      <RUBY_RUN_CONFIG NAME="ALTERN_SDK_NAME" VALUE="" />
-      <RUBY_RUN_CONFIG NAME="myPassParentEnvs" VALUE="true" />
-      <EXTENSION ID="BundlerRunConfigurationExtension" BUNDLE_MODE="AUTO" bundleExecEnabled="true" />
-      <EXTENSION ID="org.jetbrains.plugins.ruby.rails.run.RailsRunConfigurationExtension" SCRATCH_USE_RAILS_RUNNER="false" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$PROJECT_DIR$/server.rb" />
-      <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="" />
+      <RACK_CONFIG_SETTINGS_ID NAME="PORT" VALUE="9292" />
+      <RACK_CONFIG_SETTINGS_ID NAME="IP" VALUE="0.0.0.0" />
+      <RACK_CONFIG_SETTINGS_ID NAME="CONFIG_FILE" VALUE="" />
+      <RACK_CONFIG_SETTINGS_ID NAME="RACK_SERVER_TYPE" VALUE="Default" />
+      <RACK_CONFIG_SETTINGS_ID NAME="LAUNCH_JS" VALUE="false" />
       <method v="2" />
     </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-RM-251.25410.120" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-RM-242.23339.18" />
       </set>
     </attachedChunks>
   </component>
@@ -122,18 +122,54 @@
       <workItem from="1741656975753" duration="7345000" />
       <workItem from="1741710121162" duration="2904000" />
       <workItem from="1741714352565" duration="6422000" />
-      <workItem from="1745581829717" duration="15128000" />
-      <workItem from="1745844553715" duration="1579000" />
-      <workItem from="1745860442505" duration="3190000" />
-      <workItem from="1745947396177" duration="4431000" />
-      <workItem from="1746022481520" duration="15401000" />
-      <workItem from="1746130175083" duration="13747000" />
-      <workItem from="1746450364889" duration="10754000" />
-      <workItem from="1747754557737" duration="3999000" />
-      <workItem from="1747766790776" duration="210000" />
-      <workItem from="1747767045476" duration="3408000" />
-      <workItem from="1747836477062" duration="10442000" />
-      <workItem from="1748350659555" duration="2628000" />
+      <workItem from="1744206823988" duration="36000" />
+      <workItem from="1744206860144" duration="10498000" />
+      <workItem from="1744288870710" duration="12103000" />
+      <workItem from="1744374028367" duration="6264000" />
+      <workItem from="1744387952707" duration="1979000" />
+      <workItem from="1744390984425" duration="2654000" />
+      <workItem from="1744393645908" duration="4160000" />
+      <workItem from="1744638156611" duration="1100000" />
+      <workItem from="1744639465418" duration="12756000" />
+      <workItem from="1744714619684" duration="66000" />
+      <workItem from="1744715319990" duration="14000" />
+      <workItem from="1744734520951" duration="62000" />
+      <workItem from="1744808373920" duration="800000" />
+      <workItem from="1744809303075" duration="1674000" />
+      <workItem from="1744899153192" duration="7000" />
+      <workItem from="1744979869435" duration="6296000" />
+      <workItem from="1745328427402" duration="4000" />
+      <workItem from="1745531095641" duration="2928000" />
+      <workItem from="1745593308380" duration="1226000" />
+      <workItem from="1745599014932" duration="101000" />
+      <workItem from="1745602767485" duration="5618000" />
+      <workItem from="1745608502993" duration="7832000" />
+      <workItem from="1745846934220" duration="12255000" />
+      <workItem from="1745938226623" duration="13846000" />
+      <workItem from="1746019663426" duration="14203000" />
+      <workItem from="1746163886251" duration="7639000" />
+      <workItem from="1746463411531" duration="13650000" />
+      <workItem from="1746539517190" duration="24566000" />
+      <workItem from="1746625228837" duration="12114000" />
+      <workItem from="1746713316527" duration="21981000" />
+      <workItem from="1746804687307" duration="6505000" />
+      <workItem from="1746820262747" duration="2874000" />
+      <workItem from="1747072014352" duration="2778000" />
+      <workItem from="1747139791947" duration="16864000" />
+      <workItem from="1747229693753" duration="956000" />
+      <workItem from="1747230995252" duration="5244000" />
+      <workItem from="1747244549609" duration="10486000" />
+      <workItem from="1747323997704" duration="14990000" />
+      <workItem from="1747402484297" duration="20050000" />
+      <workItem from="1747658175025" duration="17367000" />
+      <workItem from="1747701220086" duration="1068000" />
+      <workItem from="1747740022277" duration="7144000" />
+      <workItem from="1747750866011" duration="5281000" />
+      <workItem from="1747827169244" duration="12628000" />
+      <workItem from="1748255737797" duration="9686000" />
+      <workItem from="1748351856932" duration="4864000" />
+      <workItem from="1748362480103" duration="691000" />
+      <workItem from="1748437163801" duration="6040000" />
     </task>
     <servers />
   </component>
