@@ -3,8 +3,9 @@ require 'json'
 require 'logger'
 require_relative '../../app/services/devices/sender'
 
+
 RSpec.describe Devices::Sender do
-  let(:ws) { instance_double('WebSocket') }
+  let(:ws) { double('WebSocket') }
 
   describe '.send' do
     it 'envia user_list corretamente' do

@@ -4,7 +4,7 @@ require_relative '../../app/services/devices/evo'
 
 RSpec.describe Devices do
   describe '.handle_reg' do
-    let(:ws) { instance_double('WebSocket', send: true) }
+    let(:ws) { double('WebSocket') }
 
     context "quando recebe o comando 'reg'" do
       let(:message) do
