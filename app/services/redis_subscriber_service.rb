@@ -1,7 +1,6 @@
 require 'logger'
 
 class RedisSubscriberService
-  LOGGER = Logger.new($stdout)
 
   @subscribed_channels = {}
   @mutex = Mutex.new
@@ -19,7 +18,7 @@ class RedisSubscriberService
       begin
         subscriber = Redis.new(host: 'redis', port: 6379)
 
-        LOGGER.info "🔄 Subscrição ao canal Redis '#{channel}' iniciada..."
+        logger.info "🔄 Subscrição ao canal Redis '#{channel}' iniciada..."
 
         subscriber.subscribe(channel) do |on|
           on.message do |_chan, message|
@@ -34,29 +33,29 @@ class RedisSubscriberService
                   Devices::Sender.send(ws, command, *args)
                 end
               else
-                LOGGER.warn "⚠️ Payload recebido sem comando no canal '#{channel}': #{payload}"
+                logger.warn "⚠️ Payload recebido sem comando no canal '#{channel}': #{payload}"
               end
             rescue JSON::ParserError => e
-              LOGGER.error "❌ Erro ao fazer parse do JSON no canal '#{channel}': #{e.message}"
+              logger.error "❌ Erro ao fazer parse do JSON no canal '#{channel}': #{e.message}"
             rescue => e
-              LOGGER.error "❌ Erro ao processar comando no canal '#{channel}': #{e.message}"
+              logger.error "❌ Erro ao processar comando no canal '#{channel}': #{e.message}"
             end
           end
         end
 
       rescue Redis::CannotConnectError => e
-        LOGGER.error "⚠️ Falha ao conectar no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
+        logger.error "⚠️ Falha ao conectar no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
         sleep 2
         retry
 
       rescue => e
-        LOGGER.error "⚠️ Erro no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
+        logger.error "⚠️ Erro no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
         sleep 2
         retry
 
       ensure
         @mutex.synchronize { @subscribed_channels.delete(channel) }
-        LOGGER.info "❌ Subscrição ao canal '#{channel}' foi encerrada."
+        logger.info "❌ Subscrição ao canal '#{channel}' foi encerrada."
       end
     end
   end
