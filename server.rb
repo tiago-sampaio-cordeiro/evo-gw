@@ -7,7 +7,7 @@ require 'logger'
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
 require_relative 'app/services/devices/sender'
-require_relative 'app/helpers/handle_ws_command_helper.rb'
+require_relative 'app/helpers/handle_ws_command_helper'
 
 class Server < Rack::App
   include HandleWsCommandHelper
@@ -66,8 +66,8 @@ class Server < Rack::App
         return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Invalid JSON' }.to_json]]
       end
     else
-      handle_ws_command(channel, command, *args, config: CONFIG)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched' }.to_json]]
+      response = handle_ws_command(channel, command, *args, config: CONFIG)
+      [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched', response: response }]]
     end
   end
 end

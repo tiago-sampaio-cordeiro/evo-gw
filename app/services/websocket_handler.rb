@@ -13,6 +13,7 @@ class WebSocketHandler
     @connections = config[:connections]
     @mutex = config[:mutex]
     @logger = config[:logger]
+    @pending_response = config[:pending_response]
   end
 
   def call(env)
@@ -32,6 +33,22 @@ class WebSocketHandler
       ws.on :message do |event|
         message = JSON.parse(event.data)
         sn = message['sn']
+
+        puts "Recebido do Redis: #{message}"
+        @redis.setex("result:#{sn}", 1000, message)
+
+        @redis.lpush("response:#{sn}", event.data)
+
+        @mutex.synchronize do
+          if sn
+            if (queue_serialized = @redis.get("pending:#{sn}"))
+              queue = Marshal.load(queue_serialized)
+              queue << message
+              @redis.del("pending:#{sn}")
+            end
+          end
+        end
+
         command = message['cmd']
         if sn
           @mutex.synchronize do

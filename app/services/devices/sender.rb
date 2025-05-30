@@ -184,6 +184,7 @@ module Devices
     def self.send_ws_command(ws, command)
       ws.send(command.to_json)
       LOGGER.info "[Devices::Sender] Comando '#{command[:cmd]}' enviado para o aparelho"
+      command
     end
   end
 end
