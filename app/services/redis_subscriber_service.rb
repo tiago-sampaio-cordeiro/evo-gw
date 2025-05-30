@@ -12,7 +12,7 @@ class RedisSubscriberService
   def self.start(channel:, ws:, mutex:, logger:)
     return if subscribed?(channel)
 
-    @mutex.synchronize { @subscribed_channels[channel] = true }
+    mutex.synchronize { subscribed_channels[channel] = true }
 
     Thread.new do
       begin
@@ -24,7 +24,6 @@ class RedisSubscriberService
           on.message do |_chan, message|
             begin
               payload = JSON.parse(message)
-
               command = payload['cmd']
               args = payload['args'] || []
 
@@ -44,9 +43,8 @@ class RedisSubscriberService
         end
 
       rescue Redis::CannotConnectError => e
-        logger.error "⚠️ Falha ao conectar no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
-        sleep 2
-        retry
+        @mutex.synchronize { @subscribed_channels.delete(channel) }
+        logger.error "⚠️ Falha ao conectar no Redis (canal: #{channel}): #{e.message}. Cancelando subscrição."
 
       rescue => e
         logger.error "⚠️ Erro no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
@@ -54,9 +52,18 @@ class RedisSubscriberService
         retry
 
       ensure
-        @mutex.synchronize { @subscribed_channels.delete(channel) }
-        logger.info "❌ Subscrição ao canal '#{channel}' foi encerrada."
+        # Remove só se existir para evitar remover indevidamente
+        mutex.synchronize do
+          if subscribed_channels.key?(channel)
+            subscribed_channels.delete(channel)
+            logger.info "❌ Subscrição ao canal '#{channel}' foi encerrada."
+          end
+        end
       end
     end
+  end
+
+  def self.subscribed_channels
+    @subscribed_channels ||= {}
   end
 end
