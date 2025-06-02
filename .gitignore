@@ -1,6 +1,12 @@
 # Ignore rubymine archives
-.idea
+
 .bundle/
 
 /tmp
 /log/*.log
+
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf/
+
+

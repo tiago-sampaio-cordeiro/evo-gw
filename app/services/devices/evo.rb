@@ -1,4 +1,5 @@
 require 'logger'
+require 'time'
 
 module Devices
   DeviceLogger = Logger.new($stdout)
@@ -12,10 +13,9 @@ module Devices
       response = {
         ret: 'reg',
         result: true,
-        cloudtime: Time.now.utc.iso8601,
+        cloudtime: Time.now.getlocal('-03:00'),
         nosenduser: true
       }
-
 
       response_ws(ws, response)
 
@@ -28,7 +28,7 @@ module Devices
         result: true,
         count: message['count'],
         logindex: message['logindex'],
-        cloudtime: Time.now.utc.iso8601,
+        cloudtime: Time.now.getlocal('-03:00'),
         access: 1,
         message: 'Logs recebidos com sucesso'
       }
@@ -36,6 +36,7 @@ module Devices
       response_ws(ws, response)
     end
   end
+
   private
 
   def self.response_ws(ws, response)

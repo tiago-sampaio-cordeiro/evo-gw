@@ -3,4 +3,8 @@
   <component name="ModuleRunConfigurationManager">
     <shared />
   </component>
+  <component name="NewModuleRootManager">
+    <orderEntry type="jdk" jdkName="rbenv: 3.3.4" jdkType="RUBY_SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
 </module>

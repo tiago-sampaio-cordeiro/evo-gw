@@ -1,63 +1,90 @@
 require 'logger'
+require 'redis'
+require 'json'
 
 class RedisSubscriberService
-  LOGGER = Logger.new($stdout)
 
-  @subscribed_channels = {}
-  @mutex = Mutex.new
-
-  def self.subscribed?(channel)
-    @mutex.synchronize { @subscribed_channels.key?(channel) }
+  def initialize(channel:, ws:, mutex_subscribed_channels:, logger:, subscribed_channels:)
+    @channel = channel
+    @ws = ws
+    @mutex_subscribed_channels = mutex_subscribed_channels
+    @logger = logger
+    @subscribed_channels = subscribed_channels
+    @thread = nil
+    @stop_requested = false
   end
 
-  def self.start(channel:, ws:, mutex:, logger:)
-    return if subscribed?(channel)
+  def start
+    return if @mutex_subscribed_channels.synchronize { @subscribed_channels.key?(@channel) }
+    return if @thread&.alive?
 
-    @mutex.synchronize { @subscribed_channels[channel] = true }
+    @mutex_subscribed_channels.synchronize { @subscribed_channels[@channel] = true }
 
-    Thread.new do
+    @thread = Thread.new do
       begin
         subscriber = Redis.new(host: 'redis', port: 6379)
 
-        LOGGER.info "🔄 Subscrição ao canal Redis '#{channel}' iniciada..."
+        @logger.info "Subscrição ao canal Redis '#{@channel}' iniciada..."
 
-        subscriber.subscribe(channel) do |on|
+        subscriber.subscribe(@channel) do |on|
           on.message do |_chan, message|
-            begin
-              payload = JSON.parse(message)
 
+            next if @stop_requested
+
+            begin
+              @logger.debug "Mensagem recebida no canal '#{@channel}': #{message}"
+
+              payload = JSON.parse(message)
               command = payload['cmd']
               args = payload['args'] || []
 
               if command
-                mutex.synchronize do
-                  Devices::Sender.send(ws, command, *args)
+                @mutex_subscribed_channels.synchronize do
+                  Devices::Sender.send(@ws, command, *args)
                 end
               else
-                LOGGER.warn "⚠️ Payload recebido sem comando no canal '#{channel}': #{payload}"
+                @logger.warn "Payload recebido sem comando no canal '#{@channel}': #{payload}"
               end
             rescue JSON::ParserError => e
-              LOGGER.error "❌ Erro ao fazer parse do JSON no canal '#{channel}': #{e.message}"
+              @logger.error "Erro ao fazer parse do JSON no canal '#{@channel}': #{e.message}"
             rescue => e
-              LOGGER.error "❌ Erro ao processar comando no canal '#{channel}': #{e.message}"
+              @logger.error "Erro ao processar comando no canal '#{@channel}': #{e.message}"
             end
           end
         end
 
       rescue Redis::CannotConnectError => e
-        LOGGER.error "⚠️ Falha ao conectar no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
-        sleep 2
-        retry
+        @logger.error "Falha ao conectar ao Redis (canal: #{@channel}): #{e.message}"
 
       rescue => e
-        LOGGER.error "⚠️ Erro no Redis (canal: #{channel}): #{e.message}. Tentando reconectar..."
+        @logger.error "Erro no Redis (canal: #{@channel}): #{e.message}. Tentando reconectar..."
         sleep 2
         retry
 
       ensure
-        @mutex.synchronize { @subscribed_channels.delete(channel) }
-        LOGGER.info "❌ Subscrição ao canal '#{channel}' foi encerrada."
+        # Remove só se existir para evitar remover indevidamente
+        @mutex_subscribed_channels.synchronize do
+          if @subscribed_channels.key?(@channel)
+            @subscribed_channels.delete(@channel)
+            @logger.info "❌ Subscrição ao canal '#{@channel}' foi encerrada."
+          end
+        end
       end
     end
   end
+
+  def stop
+    @stop_requested = true
+    if @thread&.alive?
+      @thread.kill
+      @logger.info "Thread da subscrição do canal '#{@channel}' terminada via kill."
+    end
+
+    @mutex_subscribed_channels.synchronize do
+      @subscribed_channels.delete(@channel)
+    end
+    @logger.info "Subscrição ao canal '#{@channel}' parada manualmente."
+  end
 end
+
+

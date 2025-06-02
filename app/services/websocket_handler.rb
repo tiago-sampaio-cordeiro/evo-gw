@@ -11,8 +11,10 @@ class WebSocketHandler
     @app = app
     @redis = config[:redis]
     @connections = config[:connections]
-    @mutex = config[:mutex]
+    @mutex_connections = config[:mutex_connections]
+    @mutex_subscribed_channels = config[:mutex_subscribed_channels]
     @logger = config[:logger]
+    @subscribed_channels = {}
   end
 
   def call(env)
@@ -21,11 +23,11 @@ class WebSocketHandler
 
       # Evento de abertura
       ws.on :open do |event|
-        @mutex.synchronize do
+        @mutex_connections.synchronize do
           @connections[ws] = nil
+          client_ip = env['REMOTE_ADDR'] || 'Desconhecido'
+          @logger.info "Cliente conectado: #{client_ip}"
         end
-        client_ip = env['REMOTE_ADDR'] || 'Desconhecido'
-        @logger.info "Cliente conectado: #{client_ip}"
       end
 
       # Evento de mensagem
@@ -34,7 +36,7 @@ class WebSocketHandler
         sn = message['sn']
         command = message['cmd']
         if sn
-          @mutex.synchronize do
+          @mutex_connections.synchronize do
             @connections[sn] = ws
           end
         end
@@ -47,15 +49,14 @@ class WebSocketHandler
           next
         end
 
-        # Inicia subscrição dinâmica se ainda não existe
-        unless RedisSubscriberService.subscribed?(sn)
-          RedisSubscriberService.start(
-            channel: sn,
-            ws: ws,
-            mutex: @mutex,
-            logger: @logger
-          )
-        end
+        redis_service = RedisSubscriberService.new(
+          channel: sn,
+          ws: ws,
+          mutex_subscribed_channels: @mutex_subscribed_channels,
+          logger: @logger,
+          subscribed_channels: @subscribed_channels
+        )
+        redis_service.start
       end
 
       # Evento de erro
@@ -66,7 +67,7 @@ class WebSocketHandler
       # Evento de fechamento
       ws.on :close do |event|
         @logger.info "Conexão encerrada. Código: #{event.code}, Razão: #{event.reason}"
-        @mutex.synchronize do
+        @mutex_connections.synchronize do
           sn = @connections.key(ws)
           @connections.delete(sn)
         end

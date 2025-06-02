@@ -1,28 +1,56 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (8.0.2)
+      base64
+      benchmark (>= 0.3)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.3.1)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      logger (>= 1.4.2)
+      minitest (>= 5.1)
+      securerandom (>= 0.3)
+      tzinfo (~> 2.0, >= 2.0.5)
+      uri (>= 0.13.1)
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
     base64 (0.2.0)
+    benchmark (0.4.0)
+    bigdecimal (3.1.9)
     concurrent-ruby (1.3.5)
-    connection_pool (2.5.0)
+    connection_pool (2.5.3)
+    crack (1.0.0)
+      bigdecimal
+      rexml
     daemons (1.4.1)
+    diff-lcs (1.6.2)
+    docile (1.4.1)
     dotenv (3.1.8)
+    drb (2.2.3)
     eventmachine (1.2.7)
+    factory_bot (6.5.1)
+      activesupport (>= 6.1.0)
     faker (3.5.1)
       i18n (>= 1.8.11, < 2)
     faye-websocket (0.11.3)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
+    hashdiff (1.2.0)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
-    json (2.10.2)
-    logger (1.6.6)
+    json (2.12.0)
+    logger (1.7.0)
+    minitest (5.25.5)
     multi_json (1.15.0)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
     nio4r (2.7.4)
+    public_suffix (6.0.2)
     puma (6.6.0)
       nio4r (~> 2.0)
-    rack (3.1.12)
+    rack (3.1.15)
     rack-app (11.0.2)
       rack (>= 3.0.0)
       rackup
@@ -30,22 +58,45 @@ GEM
       base64 (>= 0.1.0)
       logger (>= 1.6.0)
       rack (>= 3.0.0, < 4)
-    rack-session (2.1.0)
+    rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
+    rack-test (2.2.0)
+      rack (>= 1.3)
     rackup (2.2.1)
       rack (>= 3)
     redis (5.4.0)
       redis-client (>= 0.22.0)
     redis-client (0.24.0)
       connection_pool
+    rexml (3.4.1)
+    rspec (3.13.0)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.3)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.4)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.4)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.3)
     ruby2_keywords (0.0.5)
+    securerandom (0.4.1)
     sidekiq (8.0.1)
       connection_pool (>= 2.5.0)
       json (>= 2.9.0)
       logger (>= 1.6.2)
       rack (>= 3.1.0)
       redis-client (>= 0.23.2)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.13.1)
+    simplecov_json_formatter (0.1.4)
     sinatra (4.1.1)
       logger (>= 1.6.0)
       mustermann (~> 3.0)
@@ -64,6 +115,13 @@ GEM
       eventmachine (>= 1.0.0)
       rack (>= 1.0.0)
     tilt (2.6.0)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+    uri (1.0.3)
+    webmock (3.25.1)
+      addressable (>= 2.8.0)
+      crack (>= 0.3.2)
+      hashdiff (>= 0.4.0, < 2.0.0)
     websocket-driver (0.7.7)
       base64
       websocket-extensions (>= 0.1.0)
@@ -74,19 +132,25 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  concurrent-ruby
   dotenv
   eventmachine
+  factory_bot
   faker
   faye-websocket
   puma (~> 6.0)
   rack
   rack-app
+  rack-test
   rackup
   redis
+  rspec
   sidekiq
+  simplecov
   sinatra (~> 4.1.1)
   sinatra-contrib
   thin
+  webmock
 
 BUNDLED WITH
    2.5.11

@@ -34,4 +34,15 @@ gem 'dotenv'
 
 gem 'faker'
 
+gem 'concurrent-ruby'
 
+
+
+
+group :test do
+  gem 'rspec'
+  gem 'rack-test'
+  gem 'webmock'
+  gem 'factory_bot'
+  gem 'simplecov', require: false
+end

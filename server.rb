@@ -15,12 +15,14 @@ class Server < Rack::App
   LOGGER = Logger.new($stdout)
   REDIS = Redis.new(host: 'redis', port: 6379)
   CONNECTIONS = {}
-  MUTEX = Mutex.new
+  MUTEX_CONNECTIONS = Mutex.new
+  MUTEX_SUBSCRIBED_CHANNELS = Mutex.new
 
   CONFIG = {
     redis: REDIS,
     connections: CONNECTIONS,
-    mutex: MUTEX,
+    mutex_connections: MUTEX_CONNECTIONS,
+    mutex_subscribed_channels: MUTEX_SUBSCRIBED_CHANNELS,
     logger: LOGGER
   }
 
