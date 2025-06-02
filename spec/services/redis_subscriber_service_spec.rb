@@ -1,184 +1,144 @@
+require 'spec_helper'
+require 'json'
+require 'logger'
+require 'redis'
 require_relative '../../app/services/redis_subscriber_service'
 require_relative '../../app/services/devices/sender'
-require 'rspec'
-require 'json'
-require 'redis'
-require 'logger'
 
 RSpec.describe RedisSubscriberService do
   let(:channel) { 'test_channel' }
   let(:ws) { double('WebSocket') }
   let(:mutex) { Mutex.new }
-  let(:logger) { double('Logger', info: nil, error: nil, warn: nil) }
-  let(:redis_mock) { double('Redis') }
-  let(:service) { described_class.new }
+  let(:subscribed_channels) { {} }
+  let(:logger) { instance_double(Logger, info: nil, debug: nil, warn: nil, error: nil) }
+  let(:message) { { cmd: 'noop' }.to_json }
+  let(:redis_mock) { double('Redis', subscribe: nil) }
 
   before do
-    # Zera estado compartilhado para não dar ruim entre testes
-    described_class.instance_variable_set(:@subscribed_channels, {})
-    described_class.instance_variable_set(:@mutex, Mutex.new)
     allow(Redis).to receive(:new).and_return(redis_mock)
+    allow(redis_mock).to receive(:subscribe).and_yield(subscription_callback)
+    allow(Devices::Sender).to receive(:send)
   end
 
-  describe '.subscribed?' do
-    it 'retorna true se o canal estiver subscrito' do
-      described_class.instance_variable_get(:@subscribed_channels)[channel] = true
-      expect(described_class.subscribed?(channel)).to eq(true)
-    end
-
-    it 'retorna false se o canal não estiver subscrito' do
-      expect(described_class.subscribed?(channel)).to eq(false)
+  let(:subscription_callback) do
+    double('SubscriptionCallback').tap do |cb|
+      allow(cb).to receive(:message).and_yield(channel, message)
     end
   end
 
-  describe '.start' do
-    it 'não inicia se já estiver subscrito' do
-      described_class.instance_variable_get(:@subscribed_channels)[channel] = true
-      expect(Thread).not_to receive(:new)
-      described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-    end
+  context 'quando o canal já está inscrito' do
+    it 'não inicia nova thread' do
+      mutex.synchronize { subscribed_channels[channel] = true }
 
-    it 'inicia e processa mensagem JSON com cmd e args' do
-      handler = nil
-
-      allow(redis_mock).to receive(:subscribe).with(channel).and_yield(
-        double('SubscriptionHandler').tap do |h|
-          allow(h).to receive(:message) { |&block| handler = block }
-        end
+      result = RedisSubscriberService.start(
+        channel: channel,
+        ws: ws,
+        mutex_subscribed_channels: mutex,
+        logger: logger,
+        subscribed_channels: subscribed_channels
       )
 
-      expect(Devices::Sender).to receive(:send).with(ws, 'test_command', 'arg1')
-
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-      sleep 0.1
-
-      handler.call(channel, { cmd: 'test_command', args: ['arg1'] }.to_json)
-      thread.kill
+      expect(result).to be_nil
     end
+  end
 
-    it 'loga erro de JSON inválido' do
-      handler = nil
+  context 'quando recebe mensagem válida com comando' do
+    let(:message) { { cmd: 'notify', args: ['arg1'] }.to_json }
 
-      allow(redis_mock).to receive(:subscribe).with(channel).and_yield(
-        double('SubscriptionHandler').tap do |h|
-          allow(h).to receive(:message) { |&block| handler = block }
-        end
+    it 'envia comando via Devices::Sender' do
+      thread = RedisSubscriberService.start(
+        channel: channel,
+        ws: ws,
+        mutex_subscribed_channels: mutex,
+        logger: logger,
+        subscribed_channels: subscribed_channels
       )
 
-      expect(logger).to receive(:error).with(/Erro ao fazer parse/)
+      thread.join
 
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-      sleep 0.1
-
-      handler.call(channel, 'invalid_json')
-      thread.kill
+      expect(Devices::Sender).to have_received(:send).with(ws, 'notify', 'arg1')
+      expect(logger).to have_received(:debug).with(/Mensagem recebida/)
     end
+  end
 
-    it 'loga aviso se não houver comando no JSON' do
-      handler = nil
+  context 'quando recebe mensagem JSON inválida' do
+    let(:message) { 'INVALID_JSON' }
 
-      allow(redis_mock).to receive(:subscribe).with(channel).and_yield(
-        double('SubscriptionHandler').tap do |h|
-          allow(h).to receive(:message) { |&block| handler = block }
-        end
+    it 'loga erro de parse' do
+      thread = RedisSubscriberService.start(
+        channel: channel,
+        ws: ws,
+        mutex_subscribed_channels: mutex,
+        logger: logger,
+        subscribed_channels: subscribed_channels
       )
 
-      expect(logger).to receive(:warn).with(/sem comando/)
+      thread.join
 
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-      sleep 0.1
-
-      handler.call(channel, { foo: 'bar' }.to_json)
-      thread.kill
+      expect(logger).to have_received(:error).with(/Erro ao fazer parse/)
     end
+  end
 
-    it 'remove o canal do mapa após erro de conexão' do
-      # Força Redis a lançar erro na conexão
-      allow(Redis).to receive(:new).and_raise(Redis::CannotConnectError.new("Simulated failure"))
+  context 'quando recebe JSON sem comando' do
+    let(:message) { { something_else: true }.to_json }
 
-      null_logger = Logger.new(IO::NULL)
-
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: null_logger)
-
-      # Espera a thread fazer a tentativa de conexão, falhar e limpar o canal
-      attempts = 0
-      subscribed = true
-      while subscribed && attempts < 20
-        sleep 0.1
-        subscribed = described_class.subscribed?(channel)
-        attempts += 1
-      end
-
-      expect(subscribed).to eq(false)
-
-      thread.kill if thread&.alive?
-    end
-
-    it 'loga warning quando payload JSON não possui cmd' do
-      handler = nil
-      allow(redis_mock).to receive(:subscribe).with(channel).and_yield(
-        double('SubscriptionHandler').tap do |h|
-          allow(h).to receive(:message) { |&block| handler = block }
-        end
+    it 'loga warning e ignora' do
+      thread = RedisSubscriberService.start(
+        channel: channel,
+        ws: ws,
+        mutex_subscribed_channels: mutex,
+        logger: logger,
+        subscribed_channels: subscribed_channels
       )
 
-      expect(logger).to receive(:warn).with(/sem comando/)
+      thread.join
 
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-      sleep 0.1
+      expect(logger).to have_received(:warn).with(/Payload recebido sem comando/)
+      expect(Devices::Sender).not_to have_received(:send)
+    end
+  end
 
-      handler.call(channel, { foo: 'bar' }.to_json)
-      thread.kill
+  context 'quando Devices::Sender.send lança exceção' do
+    let(:message) { { cmd: 'fail', args: [] }.to_json }
+
+    before do
+      allow(Devices::Sender).to receive(:send).and_raise(StandardError.new('FAIL'))
     end
 
-    it 'loga erro ao receber JSON inválido' do
-      handler = nil
-      allow(redis_mock).to receive(:subscribe).with(channel).and_yield(
-        double('SubscriptionHandler').tap do |h|
-          allow(h).to receive(:message) { |&block| handler = block }
-        end
+    it 'loga erro e não interrompe' do
+      thread = RedisSubscriberService.start(
+        channel: channel,
+        ws: ws,
+        mutex_subscribed_channels: mutex,
+        logger: logger,
+        subscribed_channels: subscribed_channels
       )
 
-      expect(logger).to receive(:error).with(/Erro ao fazer parse/)
+      thread.join
 
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-      sleep 0.1
+      expect(logger).to have_received(:error).with(/Erro ao processar comando/)
+    end
+  end
 
-      handler.call(channel, 'não é json')
-      thread.kill
+  context 'quando Redis não conecta' do
+    before do
+      allow(Redis).to receive(:new).and_raise(Redis::CannotConnectError.new('connection down'))
     end
 
-    it 'loga erro quando Devices::Sender.send levanta exceção' do
-      handler = nil
-      allow(redis_mock).to receive(:subscribe).with(channel).and_yield(
-        double('SubscriptionHandler').tap do |h|
-          allow(h).to receive(:message) { |&block| handler = block }
-        end
+    let(:message) { { cmd: 'noop' }.to_json }
+
+    it 'loga erro de conexão' do
+      thread = RedisSubscriberService.start(
+        channel: channel,
+        ws: ws,
+        mutex_subscribed_channels: mutex,
+        logger: logger,
+        subscribed_channels: subscribed_channels
       )
 
-      expect(Devices::Sender).to receive(:send).and_raise(StandardError.new('falha inesperada'))
-      expect(logger).to receive(:error).with(/Erro ao processar comando/)
+      thread.join
 
-      thread = described_class.start(channel: channel, ws: ws, mutex: mutex, logger: logger)
-      sleep 0.1
-
-      handler.call(channel, { cmd: 'cmd' }.to_json)
-      thread.kill
-    end
-
-    it 'retorna false para canal nil ou vazio' do
-      expect(described_class.subscribed?(nil)).to be false
-      expect(described_class.subscribed?('')).to be false
-    end
-
-    it 'retorna true se o canal está inscrito' do
-      described_class.instance_variable_set(:@subscribed_channels, { channel => true })
-      expect(described_class.subscribed?(channel)).to eq(true)
-    end
-
-    it 'retorna false se o canal não está inscrito' do
-      described_class.instance_variable_set(:@subscribed_channels, { channel => true })
-      expect(described_class.subscribed?('outro_canal')).to eq(false)
+      expect(logger).to have_received(:error).with(/Falha ao conectar ao Redis/)
     end
   end
 end

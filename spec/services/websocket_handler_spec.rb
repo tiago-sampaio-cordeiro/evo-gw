@@ -7,14 +7,14 @@ RSpec.describe WebSocketHandler do
   let(:app) { double('App', call: [200, {}, ['fallback']]) }
   let(:redis) { double('Redis', publish: true) }
   let(:connections) { {} }
-  let(:mutex) { Mutex.new }
+  let(:mutex_connections) { Mutex.new }
   let(:logger) { Logger.new(nil) }
 
   let(:config) do
     {
       redis: redis,
       connections: connections,
-      mutex: mutex,
+      mutex_connections: mutex_connections,
       logger: logger
     }
   end
