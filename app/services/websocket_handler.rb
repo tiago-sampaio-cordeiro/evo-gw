@@ -37,15 +37,10 @@ class WebSocketHandler
         puts "Recebido do Redis: #{message}"
         @redis.setex("result:#{sn}", 1000, message)
 
-        @redis.lpush("response:#{sn}", event.data)
-
         @mutex.synchronize do
           if sn
-            if (queue_serialized = @redis.get("pending:#{sn}"))
-              queue = Marshal.load(queue_serialized)
-              queue << message
-              @redis.del("pending:#{sn}")
-            end
+            @redis.lpush("response:#{sn}", event.data)
+            @redis.del("response:#{sn}")
           end
         end
 
