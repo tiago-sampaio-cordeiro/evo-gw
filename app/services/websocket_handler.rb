@@ -12,6 +12,7 @@ class WebSocketHandler
     @redis = config[:redis]
     @connections = config[:connections]
     @mutex_connections = config[:mutex_connections]
+    @mutex_subscribed_channels = config[:mutex_subscribed_channels]
     @logger = config[:logger]
     @subscribed_channels = {}
   end
