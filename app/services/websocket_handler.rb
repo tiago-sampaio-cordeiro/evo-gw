@@ -49,14 +49,14 @@ class WebSocketHandler
           next
         end
 
-        RedisSubscriberService.start(
+        redis_service = RedisSubscriberService.new(
           channel: sn,
           ws: ws,
           mutex_subscribed_channels: @mutex_subscribed_channels,
           logger: @logger,
           subscribed_channels: @subscribed_channels
-
         )
+        redis_service.start
       end
 
       # Evento de erro
