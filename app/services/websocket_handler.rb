@@ -42,6 +42,7 @@ class WebSocketHandler
         end
 
         command = message['cmd']
+
         if sn
           @mutex.synchronize do
             @connections[sn] = ws
