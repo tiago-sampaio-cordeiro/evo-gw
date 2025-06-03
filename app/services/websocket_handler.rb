@@ -34,9 +34,6 @@ class WebSocketHandler
         message = JSON.parse(event.data)
         sn = message['sn']
 
-        puts "Recebido do Redis: #{message}"
-        @redis.setex("result:#{sn}", 1000, message)
-
         @mutex.synchronize do
           if sn
             @redis.lpush("response:#{sn}", event.data)
