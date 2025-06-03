@@ -8,8 +8,7 @@ module HandleWsCommandHelper
     redis = Redis.new(host: 'redis', port: 6379)
     key = "response:#{channel}"
 
-    _, raw_response = redis.blpop(key)
-    puts "resposta #{raw_response}"
+    _, raw_response = redis.blpop(key, timeout: 1000)
 
     if raw_response
       JSON.parse(raw_response)
