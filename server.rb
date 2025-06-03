@@ -53,13 +53,19 @@ class Server < Rack::App
         parsed = JSON.parse(body)
 
         if parsed.is_a?(Array)
+          responses = []
+
           parsed.each do |item|
             args = item.is_a?(Hash) ? item.values : item
-            handle_ws_command(channel, command, *args, config: CONFIG)
+            response = handle_ws_command(channel, command, *args, config: CONFIG)
+            responses << response
           end
+
+          [200, { 'Content-Type' => 'application/json' }, [{ status: responses[0]["result"], response: responses }]]
         else
           args = parsed.is_a?(Hash) ? parsed.values : parsed
-          handle_ws_command(channel, command, *args, config: CONFIG)
+          response = handle_ws_command(channel, command, *args, config: CONFIG)
+          response_http(response)
         end
       rescue JSON::ParserError => e
         LOGGER.error "❌ JSON inválido recebido: #{e.message}"
@@ -67,7 +73,11 @@ class Server < Rack::App
       end
     else
       response = handle_ws_command(channel, command, *args, config: CONFIG)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched', response: response }]]
+      response_http(response)
     end
+  end
+
+  def response_http(response)
+    [200, { 'Content-Type' => 'application/json' }, [{ status: response["result"], response: response }]]
   end
 end
