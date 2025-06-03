@@ -3,14 +3,13 @@ module HandleWsCommandHelper
     ws = config[:connections][channel]
     return { error: "Dispositivo não conectado" } unless ws
 
-    command_data = Devices::Sender.send(ws, command, *args)
-    ws.send(command_data.to_json)
+    Devices::Sender.send(ws, command, *args)
 
     redis = Redis.new(host: 'redis', port: 6379)
     key = "response:#{channel}"
 
-    # Espera até 1 segundo (1s = 1 segundo no BLPOP)
-    _, raw_response = redis.blpop(key, timeout: 5)
+    _, raw_response = redis.blpop(key)
+    puts "resposta #{raw_response}"
 
     if raw_response
       JSON.parse(raw_response)
