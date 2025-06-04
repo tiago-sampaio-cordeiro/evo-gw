@@ -55,23 +55,38 @@ class Server < Rack::App
         if parsed.is_a?(Array)
           responses = []
 
-          parsed.each do |item|
+          parsed.each_with_index do |item, index|
             args = item.is_a?(Hash) ? item.values : item
-            response = handle_ws_command(channel, command, *args, config: CONFIG)
+            result = handle_ws_command(channel, command, *args, config: CONFIG)
+
+            response = {
+              response: {
+                response: result.reject { |k, _v| ["ret", "sn"].include?(k) }
+              }
+            }
+
+            if index == 0
+              response[:ret] = result["ret"]
+              response[:sn] = result["sn"]
+            end
+
             responses << response
           end
 
-          [200, { 'Content-Type' => 'application/json' }, [{ status: responses[0]["result"], response: responses }]]
+          [200, { 'Content-Type' => 'application/json' }, [{ status: responses.last[:response][:response]["result"], response: responses }]]
         else
+
           args = parsed.is_a?(Hash) ? parsed.values : parsed
           response = handle_ws_command(channel, command, *args, config: CONFIG)
           response_http(response)
         end
+
       rescue JSON::ParserError => e
         LOGGER.error "❌ JSON inválido recebido: #{e.message}"
         return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Invalid JSON' }.to_json]]
       end
     else
+
       response = handle_ws_command(channel, command, *args, config: CONFIG)
       response_http(response)
     end
