@@ -36,7 +36,7 @@ class WebSocketHandler
         message = JSON.parse(event.data)
         sn = message['sn']
 
-        @mutex.synchronize do
+        @mutex_connections.synchronize do
           if sn
             @redis.lpush("response:#{sn}", event.data)
             @redis.del("response:#{sn}")
