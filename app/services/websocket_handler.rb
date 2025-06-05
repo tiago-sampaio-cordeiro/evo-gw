@@ -14,6 +14,7 @@ class WebSocketHandler
     @mutex_connections = config[:mutex_connections]
     @mutex_subscribed_channels = config[:mutex_subscribed_channels]
     @logger = config[:logger]
+    @pending_response = config[:pending_response]
     @subscribed_channels = {}
   end
 
@@ -34,7 +35,16 @@ class WebSocketHandler
       ws.on :message do |event|
         message = JSON.parse(event.data)
         sn = message['sn']
+
+        @mutex.synchronize do
+          if sn
+            @redis.lpush("response:#{sn}", event.data)
+            @redis.del("response:#{sn}")
+          end
+        end
+
         command = message['cmd']
+
         if sn
           @mutex_connections.synchronize do
             @connections[sn] = ws

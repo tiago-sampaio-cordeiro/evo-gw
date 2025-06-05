@@ -7,7 +7,7 @@ require 'logger'
 require_relative 'app/services/websocket_handler'
 require_relative 'app/services/redis_subscriber_service'
 require_relative 'app/services/devices/sender'
-require_relative 'app/helpers/handle_ws_command_helper.rb'
+require_relative 'app/helpers/handle_ws_command_helper'
 
 class Server < Rack::App
   include HandleWsCommandHelper
@@ -55,21 +55,46 @@ class Server < Rack::App
         parsed = JSON.parse(body)
 
         if parsed.is_a?(Array)
-          parsed.each do |item|
+          responses = []
+
+          parsed.each_with_index do |item, index|
             args = item.is_a?(Hash) ? item.values : item
-            handle_ws_command(channel, command, *args, config: CONFIG)
+            result = handle_ws_command(channel, command, *args, config: CONFIG)
+
+            response = {
+              response: {
+                response: result.reject { |k, _v| ["ret", "sn"].include?(k) }
+              }
+            }
+
+            if index == 0
+              response[:ret] = result["ret"]
+              response[:sn] = result["sn"]
+            end
+
+            responses << response
           end
+
+          [200, { 'Content-Type' => 'application/json' }, [{ status: responses.last[:response][:response]["result"], response: responses }]]
         else
+
           args = parsed.is_a?(Hash) ? parsed.values : parsed
-          handle_ws_command(channel, command, *args, config: CONFIG)
+          response = handle_ws_command(channel, command, *args, config: CONFIG)
+          response_http(response)
         end
+
       rescue JSON::ParserError => e
         LOGGER.error "❌ JSON inválido recebido: #{e.message}"
         return [400, { 'Content-Type' => 'application/json' }, [{ error: 'Invalid JSON' }.to_json]]
       end
     else
-      handle_ws_command(channel, command, *args, config: CONFIG)
-      [200, { 'Content-Type' => 'application/json' }, [{ status: 'Command dispatched' }.to_json]]
+
+      response = handle_ws_command(channel, command, *args, config: CONFIG)
+      response_http(response)
     end
+  end
+
+  def response_http(response)
+    [200, { 'Content-Type' => 'application/json' }, [{ status: response["result"], response: response }]]
   end
 end

@@ -1,17 +1,20 @@
 module HandleWsCommandHelper
   def handle_ws_command(channel, command, *args, config:)
     ws = config[:connections][channel]
-
-    unless ws
-      config[:logger].error "❌ Nenhuma conexão WebSocket ativa para o canal '#{channel}'"
-      return
-    end
-
-    config[:logger].info "➡️  Enviando comando '#{command}' para canal '#{channel}' com args: #{args.inspect}"
+    return { error: "Dispositivo não conectado" } unless ws
 
     Devices::Sender.send(ws, command, *args)
-  rescue => e
-    config[:logger].error "🔥 Erro ao processar comando '#{command}' no canal '#{channel}': #{e.message}"
-    config[:logger].error e.backtrace.join("\n")
+
+    redis = Redis.new(host: 'redis', port: 6379)
+    key = "response:#{channel}"
+
+    _, raw_response = redis.blpop(key, timeout: 1000)
+
+    if raw_response
+      JSON.parse(raw_response)
+    else
+      { error: 'Timeout esperando resposta do dispositivo' }
+    end
   end
+
 end
