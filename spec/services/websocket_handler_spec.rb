@@ -67,6 +67,9 @@ RSpec.describe WebSocketHandler do
 
     event = double('Event', data: message)
 
+    expect(redis).to receive(:lpush).with("response:123", message)
+    expect(redis).to receive(:del).with("response:123")
+
     @events[:message].call(event)
 
     expect(redis).to have_received(:publish).with('sendlog_channel', message)
