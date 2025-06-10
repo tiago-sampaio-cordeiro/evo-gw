@@ -68,9 +68,9 @@ Create a tab for websoket requests and enter the following address in the URL:
 With one or more facial readers connected, it is possible to simulate commands by insomnia using the POST method. User registration commands, for example, require a body with an array containing id, name and password. To generate this data, there is a script in the project root for generating users using faker that can be changed for as many users as desired.
 
 After starting the server, open another tab and type the following command:
-`ruby mock_users.rb`
+`ruby mock_usuarios.rb`
 
-A mock_users.json file will be generated with the fake data
+A mock_usuarios.json file will be generated with the fake data
 
 - Register and update users
   `http://localhost:9292/pub/chat/serial_number_of_the_reader/set_user_info`
@@ -78,7 +78,7 @@ A mock_users.json file will be generated with the fake data
 and in the body, put one or more users that you want to register in the reader,
 
 - List registered users
-  `http://localhost:9292/pub/chat/serial number_of_the_reader/user_list`
+  `http://localhost:9292/pub/chat/serial_number_of_the_reader/user_list`
 
 Since this is a search command, it does not need a body
 
