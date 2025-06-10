@@ -1,6 +1,6 @@
 # Evo-GW
 
-This is a project that will receive connections from evo, and will expose them to the PTRP main project.
+This is a project that will receive connections from evo and expose them to the main PTRP project.
 
 - [About](#About)
 
@@ -14,11 +14,9 @@ This is a project that will receive connections from evo, and will expose them t
 
 ## About
 
-The application is a web solution developed in **Ruby** and **Sinatra**, designed to intermediate communication between **time clocks** (initially from the Evo line) and **PTRP** through a **WebSocket server**. The system receives data from the time clocks, applies authentication and encryption, and securely forwards it to PTRP.
+The application is a web solution developed in **Ruby**, **Rack-app(DSL rack based on sinatra)** and redis and was designed to mediate communication between **face readers** and **PTRP** through a **WebSocket server**. Readers can send or receive commands from the websocket server and to manage this delivery, Redis, through the PUB/SUB service, creates exclusive channels for each reader that establishes a connection with the websocket server, allowing the command to be sent to a specific reader, enabling operations such as **user registration, listing, updating and deleting**.
 
-In addition to processing and forwarding received data, the application allows PTRP to send specific commands to the time clocks, enabling operations such as **user registration, listing, and deletion**.
-
-The primary purpose of this gateway is to **overcome the lack of TLS support in time clocks**, which makes direct connection to PTRP unfeasible. By handling and adapting requests before forwarding them, the system ensures secure and functional communication, eliminating this limitation and enabling seamless integration.  
+The main objective of this gateway is to **overcome the lack of TLS support in facial readers**, which makes direct connection to the PTRP impossible. By processing and adapting requests before forwarding them, the system ensures secure and functional communication, eliminating this limitation and allowing integration between readers and the PTRP.
 
 ---
 
@@ -41,38 +39,58 @@ The primary purpose of this gateway is to **overcome the lack of TLS support in 
 
 **start the application**
 
-`cd /path/of/project`
+`cd /path/to/project`
 
 **start the application and view the connection logs**
 
 `docker compose up`
 
-**start the application without displaying connection logs**
+**start the application without displaying the connection logs**
 
 `docker compose up -d`
+
+**Checking the connection between a client and the websocket server**
+
+- From the linux terminal:
+
+`wscat -c ws://localhost:9292/pub/chat`
+
+- By insomnia:
+
+Create a tab for websoket requests and enter the following address in the URL:
+
+`ws://localhost:9292/pub/chat`
 
 ---
 
 ## How to use
 
-### Connecting a client to the Websocket server in linux terminal
+With one or more facial readers connected, it is possible to simulate commands by insomnia using the POST method. User registration commands, for example, require a body with an array containing id, name and password. To generate this data, there is a script in the project root for generating users using faker that can be changed for as many users as desired.
 
-If you do not have the wscat tool installed on your host, use the command:
+After starting the server, open another tab and type the following command:
+`ruby mock_users.rb`
 
-`npm install -g wscat`
+A mock_users.json file will be generated with the fake data
 
-After the wscat tool is installed use the command:
+- Register and update users
+  `http://localhost:9292/pub/chat/serial_number_of_the_reader/set_user_info`
 
-`wscat -c ws://localhost:4567`
+and in the body, put one or more users that you want to register in the reader,
 
-In the terminal where the server is running,  
-a log will be displayed confirming the client's connection to the websocket server.
+- List registered users
+  `http://localhost:9292/pub/chat/serial number_of_the_reader/user_list`
 
-`app-1  | 172.18.0.1 - - [11/Mar/2025:20:53:54 +0000] "GET / HTTP/1.1" -1 - 0.0048`  
-`app-1  | Cliente conectado: 172.18.0.1`
+Since this is a search command, it does not need a body
 
+- Clear all users from the reader
+  `http://localhost:9292/pub/chat/serial_number_of_the_reader/clean_user`
+  This command also does not need a body
 
+## Unit tests
 
+For testing, use the command in the root of the project:
 
+`rspec`
 
-
+To test specific directories use:
+`rspec spec/../../.......`
